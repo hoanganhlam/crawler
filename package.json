@@ -1,0 +1,44 @@
+{
+    "name": "crawler_control",
+    "version": "1.0.0",
+    "description": "My classy Nuxt.js project",
+    "author": "dev",
+    "private": true,
+    "scripts": {
+        "dev": "nuxt",
+        "build": "nuxt build",
+        "start": "nuxt start",
+        "generate": "nuxt generate"
+    },
+    "dependencies": {
+        "@nuxtjs/axios": "^5.3.6",
+        "ant-design-vue": "^1.1.10",
+        "bluebird": "^3.5.3",
+        "body-parser": "^1.19.0",
+        "cookie-parser": "^1.4.3",
+        "core-config": "file:server/cores/config",
+        "core-model": "file:server/cores/model",
+        "dotenv": "^6.1.0",
+        "express": "^4.16.4",
+        "express-jwt": "^5.3.1",
+        "express-session": "^1.16.2",
+        "jsonwebtoken": "latest",
+        "lodash": "^4.17.11",
+        "mongoose": "^5.6.2",
+        "mongoose-unique-validator": "^2.0.3",
+        "morgan": "^1.9.1",
+        "nuxt": "^2.0.0",
+        "passport": "^0.4.0",
+        "passport-local": "^1.0.0",
+        "v-jsoneditor": "^1.2.0"
+    },
+    "devDependencies": {
+        "coffee-loader": "^0.9.0",
+        "coffeescript": "^2.4.1",
+        "node-sass": "^4.12.0",
+        "nodemon": "^1.18.9",
+        "pug": "^2.0.3",
+        "pug-plain-loader": "^1.0.0",
+        "sass-loader": "^7.1.0"
+    }
+}

@@ -27,3 +27,9 @@ which contains all configs of the project.
 
 ## Test api
 You must import "api-example.postman_collection.json" to Postman application to test api.
+
+[
+    {
+        ""
+    }
+]

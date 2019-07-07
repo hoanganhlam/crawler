@@ -1,0 +1,57 @@
+.page_task {
+    height: -webkit-fill-available;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .main {
+        flex: 1;
+    }
+}
+
+.task-panel {
+    height: -webkit-fill-available;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    -webkit-box-pack: center;
+    justify-content: center;
+
+    .ant-row {
+        flex: 1;
+    }
+
+    .sub-panel {
+
+
+    }
+
+    .ant-card {
+        min-height: 390px;
+    }
+
+}
+
+.bt-16 {
+    margin-bottom: 16px;
+}
+
+.action-bar {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+}
+
+
+.ant-card-wider-padding .ant-card-head,
+.ant-card-head {
+    padding: 0 10px;
+    min-height: 30px;
+
+    .ant-card-head-title,
+    .ant-card-extra {
+        padding: 5px 0;
+    }
+}

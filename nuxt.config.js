@@ -58,5 +58,8 @@ export default {
         */
         extend(config, ctx) {
         }
+    },
+    env: {
+        WS_URL: process.env.WS_URL || 'http://127.0.0.1:3001'
     }
 }

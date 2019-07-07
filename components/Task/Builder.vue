@@ -10,7 +10,7 @@
                             </a-col>
                             <a-col :span="12" style="text-align: right">
                                 <a-button v-if="value" icon="delete" @click="onDelete(value._id)"/>
-                                <a-button icon="play-circle" @click="onPlay"/>
+                                <a-button v-if="value" icon="play-circle" @click="onPlay(value._id)"/>
                                 <a-button icon="upload" @click="onPost"/>
                             </a-col>
                         </a-row>
@@ -24,6 +24,9 @@
         <a-row>
             <a-col :span="24" class="sub-panel">
                 <a-card :bodyStyle="{padding: '10px'}" title="CONSOLE">
+                    <div v-for="display, id in consoleDisplay" :key="id">
+                        <span v-for="field in display">{{field}}: {{display[field]}}</span>
+                    </div>
                 </a-card>
             </a-col>
         </a-row>
@@ -33,6 +36,7 @@
 <script>
     import Logic from './Logic'
     import Setting from './Setting'
+    import io from 'socket.io-client'
 
     const SAMPLE = {
         title: "Lấy tin tức du lịch từ VNExpress",
@@ -49,41 +53,38 @@
                 key: '2',
                 title: "Đến danh mục du lịch",
                 action: "CLICK",
-                target: ".mnu_dulich",
+                target: "#main_menu > a.mnu_dulich",
             },
             {
-                //Đoạn này t cần logic loop lấy hết các page pagination
                 key: '3',
                 title: "Lấy hết các phân trang",
-                action: "CLICK",
                 target: ".next",
-                isLoop: true,
-                // Có thể loop dự vào element của trang (single) hoặc một list các url (list)
-                loopModel: "single",
-                children: [
-                    {
-                        key: '31',
-                        title: "Bóc tách dữ liệu",
-                        action: "EXTRACT",
-                        fields: [
-                            {
-                                field: 'title',
-                                path: '.title_news',
+                loop: "PAGING",
+                children: [{
+                    key: '31',
+                    title: "Bóc tách dữ liệu",
+                    action: "EXTRACT",
+                    target: "#col_sticky > article",
+                    fields: [{
+                        field: 'title',
+                        attr: 'innerHTML',
+                        path: 'a',
 
-                            },
-                            {
-                                field: 'url',
-                                path: '.title_news',
+                    },
+                        {
+                            field: 'url',
+                            attr: 'href',
+                            path: 'a',
 
-                            },
-                            {
-                                field: 'description',
-                                path: '.description',
+                        },
+                        {
+                            field: 'description',
+                            attr: 'innerHTML',
+                            path: '.description',
 
-                            }
-                        ]
-                    }
-                ]
+                        }
+                    ]
+                }]
             }
         ]
     }
@@ -111,7 +112,9 @@
         data() {
             return {
                 form: this.value ? this.value : SAMPLE,
-                selectedNode: null
+                selectedNode: null,
+                socket: io(`${process.env.WS_URL}`),
+                consoleDisplay: []
             }
         },
         methods: {
@@ -134,8 +137,10 @@
                     })
                 }
             },
-            onPlay() {
-
+            onPlay(id) {
+                this.$axios.$post(`/run/`, {
+                    id: id
+                })
             },
             onAdd() {
 
@@ -148,7 +153,12 @@
         },
         created() {
             this.selectedNode = this.form
-        }
+        },
+        mounted() {
+            this.socket.on('data', (data) => {
+                this.consoleDisplay.push(data)
+            })
+        },
     }
 </script>
 

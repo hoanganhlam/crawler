@@ -9,7 +9,6 @@ require('./helpers/load-env');
 const userRoute = require('./routes/userRoute');
 
 const app = express();
-
 app.use(httpLogger('dev'));
 app.use(bodyParser.json({
     verify(req, res, buf) {
@@ -18,7 +17,7 @@ app.use(bodyParser.json({
 }));
 
 app.use(session({
-    secret : "secret",
+    secret: "secret",
     saveUninitialized: true,
     resave: true
 }))
@@ -31,5 +30,29 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 require('./config/passport');
 app.use('/api', require('./routes'));
+
+var appSocket = require('express')();
+var http = require('http').createServer(appSocket);
+
+http.listen(3001, function () {
+    console.log('listening on *:3001');
+});
+var io = require('socket.io')(http);
+io.on('connection', function (socket) {
+    socket.emit('data', {'msg': 'hello'})
+});
+
+app.post('/api/run', function (req, res, next) {
+    const {TaskModel} = require('core-model');
+    const {crawler} = require('./crawler/v2')
+    TaskModel.findById(req.body.id)
+        .then(function (instance) {
+            if (!instance) {
+                return res.sendStatus(404);
+            }
+            crawler(instance.tasks, io)
+            return res.sendStatus(200);
+        }).catch(next);
+})
 
 module.exports = app;

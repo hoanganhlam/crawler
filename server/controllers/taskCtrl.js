@@ -1,6 +1,7 @@
 const {TaskModel} = require('core-model');
 const {responseJSON, responseError} = require('./response');
 const {getBody} = require('./request');
+const {crawler} = require('../crawler/v2')
 
 exports.create = (req, res) => {
     let data = getBody(req, ['title', 'isLoop', 'tasks', 'schedule']);
@@ -50,5 +51,6 @@ exports.delete = (req, res) => {
 };
 
 exports.run = (req, res) => {
-    return res.sendStatus(204);
+    crawler(req.instance.tasks)
+    return res.sendStatus(200);
 };

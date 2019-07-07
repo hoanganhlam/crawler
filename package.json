@@ -15,6 +15,7 @@
         "ant-design-vue": "^1.1.10",
         "bluebird": "^3.5.3",
         "body-parser": "^1.19.0",
+        "cheerio": "^1.0.0-rc.3",
         "cookie-parser": "^1.4.3",
         "core-config": "file:server/cores/config",
         "core-model": "file:server/cores/model",
@@ -30,6 +31,9 @@
         "nuxt": "^2.0.0",
         "passport": "^0.4.0",
         "passport-local": "^1.0.0",
+        "puppeteer": "^1.18.1",
+        "socket.io": "^2.2.0",
+        "socket.io-client": "^2.2.0",
         "v-jsoneditor": "^1.2.0"
     },
     "devDependencies": {

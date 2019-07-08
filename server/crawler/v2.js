@@ -3,7 +3,7 @@ const batchCrawl = Number(process.env.BATCH_CRAWL || 5);
 const cheerio = require('cheerio');
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
 const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
-let isOptimized = true;
+let isOptimized = false;
 
 var io = null;
 

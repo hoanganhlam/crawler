@@ -18,10 +18,12 @@
                             <a-select-option value="LAZY">Lazyload</a-select-option>
                         </a-select>
                     </a-form-item>
-                    <a-form-item v-if="value.hasOwnProperty('tasks')" label="Schedule" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
+                    <a-form-item v-if="value.hasOwnProperty('tasks')" label="Schedule" :label-col="formLayout.labelCol"
+                                 :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.schedule"/>
                     </a-form-item>
-                    <a-form-item v-if="!value.hasOwnProperty('tasks')" label="action" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
+                    <a-form-item v-if="!value.hasOwnProperty('tasks')" label="action" :label-col="formLayout.labelCol"
+                                 :wrapper-col="formLayout.wrapperCol">
                         <a-select
                             v-model="form.action"
                             showSearch
@@ -41,7 +43,8 @@
                                  :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.maxPage"/>
                     </a-form-item>
-                    <a-form-item v-if="form.isLoop" label="Scroll" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
+                    <a-form-item v-if="form.isLoop" label="Scroll" :label-col="formLayout.labelCol"
+                                 :wrapper-col="formLayout.wrapperCol">
                         <a-switch v-model="form.scrollDown">
                             <a-icon type="check" slot="checkedChildren"/>
                             <a-icon type="close" slot="unCheckedChildren"/>
@@ -50,23 +53,57 @@
                     <a-form-item label="Target" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.target"/>
                     </a-form-item>
-                    <a-form-item v-if="form.action === 'EXTRACT'" label="Field" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
-                        <a-row v-for="field, i in form.fields" :key="i">
-                            <a-col :span="12">
-                                {{field.field}}
-                            </a-col>
-                            <a-col :span="12">
-                                <a-input v-model="field.path"></a-input>
-                            </a-col>
-                        </a-row>
-                    </a-form-item>
                 </a-col>
             </a-row>
         </a-form>
+        <div>
+            <a-table :columns="columns" :dataSource="form.fields">
+                <template slot="field" slot-scope="text, record">
+                    <a-input v-model="record.field"></a-input>
+                </template>
+                <template slot="path" slot-scope="text, record">
+                    <a-input v-model="record.path"></a-input>
+                </template>
+                <template slot="attr" slot-scope="text, record">
+                    <a-input v-model="record.attr"></a-input>
+                </template>
+                <template slot="operation" slot-scope="text, record">
+                    <a-popconfirm
+                        v-if="form.fields"
+                        title="Sure to delete?"
+                        @confirm="() => onDelete(record.field)">
+                        <a href="javascript:;">Delete</a>
+                    </a-popconfirm>
+                </template>
+            </a-table>
+            <a-button class="editable-add-btn" @click="handleAdd">Add</a-button>
+        </div>
     </a-card>
 </template>
 
 <script>
+
+    const columns = [
+        {
+            dataIndex: 'field',
+            key: 'field',
+            slots: {title: 'Field'},
+            scopedSlots: {customRender: 'field'},
+        }, {
+            dataIndex: 'path',
+            key: 'path',
+            slots: {title: 'Path'},
+            scopedSlots: {customRender: 'path'},
+        }, {
+            dataIndex: 'attr',
+            key: 'attr',
+            slots: {title: 'Position'},
+            scopedSlots: {customRender: 'attr'},
+        }, {
+            dataIndex: 'operation',
+            scopedSlots: {customRender: 'operation'},
+        }];
+
     export default {
         name: "Setting",
         props: {
@@ -82,7 +119,22 @@
                     labelCol: {span: 6},
                     wrapperCol: {span: 14},
                 },
+                columns
             }
+        },
+        methods: {
+            handleAdd() {
+                const newData = {
+                    field: `null`,
+                    path: null,
+                    attr: `innerHTML`,
+                }
+                this.form.fields = [...this.form.fields, newData]
+            },
+            onDelete(field) {
+                const dataSource = [...this.form.fields]
+                this.form.fields = dataSource.filter(item => item.field !== field)
+            },
         },
         watch: {
             value() {

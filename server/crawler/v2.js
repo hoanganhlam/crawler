@@ -3,20 +3,7 @@ const batchCrawl = Number(process.env.BATCH_CRAWL || 5);
 const cheerio = require('cheerio');
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
 const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
-let isOptimized = false;
-
-const SAMPLE = [{
-    key: '1',
-    title: "Đến trang chủ",
-    action: "GOTO",
-    target: "https://www.sitepoint.com/vuex-beginner-guide/",
-},
-    {
-        key: '3',
-        title: "Lấy hết các phân trang",
-        loop: "LAZY"
-    }
-]
+let isOptimized = true;
 
 var io = null;
 
@@ -93,7 +80,10 @@ async function actionType(script, page) {
             break;
         case 'CLICK':
             await page.waitForSelector(script.target);
-            await page.click(script.target);
+            await Promise.all([
+                page.click(script.target),
+                page.waitForNavigation(),
+            ]);
             break;
         case 'INPUT':
             await page.waitForSelector(script.target);
@@ -174,16 +164,16 @@ async function singleLoop(script, page, browser) {
 async function pagingLoop(script, page) {
     let stopCondition = script.maxPage;
     const $ = cheerio.load(await page.content());
-    let target = $(script.target).get();
+    let target = $(script.target) && $(script.target).attr('href');
     while (stopCondition > 1 || target) {
         await starting(script.children, page);
         const $ = cheerio.load(await page.content());
-        target = $(script.target).get();
+        target = $(script.target) && $(script.target).attr('href');
         if (target) {
-            await Promise.all([
-                page.waitForNavigation(),
-                page.click(script.target)
-            ]);
+            await page.goto(target, {
+                waitUntil: 'networkidle0',
+                timeout: 360000
+            });
         }
         --stopCondition;
     }

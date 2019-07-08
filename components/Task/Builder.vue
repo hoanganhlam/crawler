@@ -1,6 +1,6 @@
 <template>
     <div class="task-panel">
-        <a-row :gutter="16">
+        <a-row :gutter="16" class="bt-16">
             <a-col :span="8" class="sub-panel">
                 <Logic :value="form.tasks" @select="onSelect">
                     <div class="action-bar">
@@ -24,9 +24,15 @@
         <a-row>
             <a-col :span="24" class="sub-panel">
                 <a-card :bodyStyle="{padding: '10px'}" :title="`CONSOLE (${consoleDisplay.length - 1})`">
-                    <div v-for="display, id in consoleDisplay" :key="id">
-                        <div v-for="field in display">{{field}}: {{display[field]}}</div>
-                        <hr>
+                    <div v-for="display, id in consoleDisplay" :key="id"
+                         style="margin-bottom: 5px"
+                         class="ant-alert ant-alert-info">
+                        <div class="ant-alert-message">
+                            <div v-for="field in Object.keys(display)" :key="id + field">
+                                {{field}} : {{display[field]}}
+                            </div>
+                        </div>
+                        <span class="ant-alert-description"></span>
                     </div>
                 </a-card>
             </a-col>
@@ -61,6 +67,7 @@
                 title: "Lấy hết các phân trang",
                 target: ".next",
                 loop: "PAGING",
+                maxPage: 1,
                 children: [
                     {
                         key: '31',
@@ -160,7 +167,7 @@
         },
         mounted() {
             this.socket.on('data', (data) => {
-                this.consoleDisplay.push(data)
+                this.consoleDisplay.unshift(data)
             })
         },
     }

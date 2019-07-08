@@ -28,7 +28,7 @@ var io = null;
 export function crawler(scripts, ioP) {
     io = ioP
     puppeteer.launch({
-        headless: false,
+        headless: isOptimized,
         defaultViewport: null,
         args: ['--no-sandbox',
             '--disable-setuid-sandbox',
@@ -39,6 +39,7 @@ export function crawler(scripts, ioP) {
     }).then(async browser => {
         const page = await browser.newPage();
         if (isOptimized) {
+            await page.setRequestInterception(true);
             page.on('request', request => {
                 const requestUrl = request._url.split('?')[0].split('#')[0];
                 if (
@@ -73,7 +74,7 @@ async function loopType(script, page) {
             await pagingLoop(script, page);
             break;
         case 'LAZY':
-            await lazyLoadingLoop(script, page, script.stopCondition);
+            await lazyLoadingLoop(script, page);
             break;
         default:
             await actionType(script, page);
@@ -149,6 +150,7 @@ async function singleLoop(script, page, browser) {
             const tempPage = await browser.newPage();
             pages.push(tempPage);
             if (isOptimized) {
+                await page.setRequestInterception(true)
                 tempPage.on('request', request => {
                     const requestUrl = request._url.split('?')[0].split('#')[0];
                     if (
@@ -170,21 +172,28 @@ async function singleLoop(script, page, browser) {
 }
 
 async function pagingLoop(script, page) {
-    await starting(script.children, page);
+    let stopCondition = script.maxPage;
     const $ = cheerio.load(await page.content());
-    if ($(script.target).get()) {
-        await Promise.all([
-            page.waitForNavigation(),
-            page.click(script.target)
-        ]);
-        pagingLoop(script, page);
+    let target = $(script.target).get();
+    while (stopCondition > 1 || target) {
+        await starting(script.children, page);
+        const $ = cheerio.load(await page.content());
+        target = $(script.target).get();
+        if (target) {
+            await Promise.all([
+                page.waitForNavigation(),
+                page.click(script.target)
+            ]);
+        }
+        --stopCondition;
     }
 }
 
-async function lazyLoadingLoop(script, page, stopCondition) {
-    while (stopCondition >= 0) {
-        --stopCondition;
+async function lazyLoadingLoop(script, page) {
+    let stopCondition = script.stopCondition;
+    while (stopCondition > 1) {
         await autoScroll(page);
+        --stopCondition;
     }
     starting(script.children, page);
 }

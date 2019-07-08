@@ -39,6 +39,9 @@
                 console.log(err);
             }
         },
+        updated() {
+            this.$emit('input', this.structure)
+        }
     }
 
 </script>

@@ -37,9 +37,9 @@
                     </a-form-item>
                 </a-col>
                 <a-col :span="12" v-if="!value.hasOwnProperty('tasks')">
-                    <a-form-item v-if="form.isLoop" label="Stop condition" :label-col="formLayout.labelCol"
+                    <a-form-item v-if="form.loop" label="Max Page" :label-col="formLayout.labelCol"
                                  :wrapper-col="formLayout.wrapperCol">
-                        <a-input v-model="form.stopCondition"/>
+                        <a-input v-model="form.maxPage"/>
                     </a-form-item>
                     <a-form-item v-if="form.isLoop" label="Scroll" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
                         <a-switch v-model="form.scrollDown">
@@ -50,8 +50,15 @@
                     <a-form-item label="Target" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.target"/>
                     </a-form-item>
-                    <a-form-item label="Field" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
-                        <a-input v-model="form.field"/>
+                    <a-form-item v-if="form.action === 'EXTRACT'" label="Field" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
+                        <a-row v-for="field, i in form.fields" :key="i">
+                            <a-col :span="12">
+                                {{field.field}}
+                            </a-col>
+                            <a-col :span="12">
+                                <a-input v-model="field.path"></a-input>
+                            </a-col>
+                        </a-row>
                     </a-form-item>
                 </a-col>
             </a-row>

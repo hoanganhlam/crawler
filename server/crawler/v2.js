@@ -1,60 +1,24 @@
 const puppeteer = require('puppeteer');
 const batchCrawl = Number(process.env.BATCH_CRAWL || 5);
 const cheerio = require('cheerio');
-// import {
-//     isPrimitive
-// } from 'util';
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
-const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn',];
-const invalidUrl = /([a-zA-Z0-9\s_\\.\-\(\):])+(.doc|.docx|.pdf|.png|.jpg|.jpeg|.svg|.gif|.json|.xls|.mp3|.mp4|.wav|.3gp|.aa|.aac|.aax|.m4a|.m4b|.vox|.wabm|.ogg|.webm)$/i
+const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
+let isOptimized = false;
 
-const SAMPLE = [
-    {
-        key: '1',
-        title: "Đến trang chủ",
-        action: "GOTO",
-        target: "https://vnexpress.net/",
-    },
-    {
-        key: '2',
-        title: "Đến danh mục du lịch",
-        action: "CLICK",
-        target: "#main_menu > a.mnu_dulich",
-    },
+const SAMPLE = [{
+    key: '1',
+    title: "Đến trang chủ",
+    action: "GOTO",
+    target: "https://www.sitepoint.com/vuex-beginner-guide/",
+},
     {
         key: '3',
         title: "Lấy hết các phân trang",
-        target: ".next",
-        loop: "PAGING",
-        children: [{
-            key: '31',
-            title: "Bóc tách dữ liệu",
-            action: "EXTRACT",
-            target: "#col_sticky > article",
-            fields: [{
-                field: 'title',
-                attr: 'innerHTML',
-                path: 'a',
-
-            },
-                {
-                    field: 'url',
-                    attr: 'href',
-                    path: 'a',
-
-                },
-                {
-                    field: 'description',
-                    attr: 'innerHTML',
-                    path: '.description',
-
-                }
-            ]
-        }]
+        loop: "LAZY"
     }
 ]
 
-var io = null
+var io = null;
 
 /**
  * function crawler
@@ -69,11 +33,26 @@ export function crawler(scripts, ioP) {
         args: ['--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-accelerated-2d-canvas',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--window-size=1920,1080'
         ]
     }).then(async browser => {
         const page = await browser.newPage();
-        starting(scripts, page);
+        if (isOptimized) {
+            page.on('request', request => {
+                const requestUrl = request._url.split('?')[0].split('#')[0];
+                if (
+                    block_ressources.indexOf(request.resourceType) !== -1 ||
+                    skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+                ) {
+                    request.abort();
+                } else {
+                    request.continue();
+                }
+            });
+        }
+        await starting(scripts, page);
+        await browser.close();
     });
 }
 
@@ -94,7 +73,7 @@ async function loopType(script, page) {
             await pagingLoop(script, page);
             break;
         case 'LAZY':
-            await lazyLoadingLoop(script, page);
+            await lazyLoadingLoop(script, page, script.stopCondition);
             break;
         default:
             await actionType(script, page);
@@ -152,42 +131,73 @@ async function extractData(target, fields, page) {
         }
         result.push(data);
     });
+    //Save to Database here
     return result;
 }
 
 async function singleLoop(script, page, browser) {
-    var url = page.url();
-    var pages = [];
-    var promises = [];
-    for (let i = 0; i < batchCrawl; i++) {
-        const tempPage = await browser.newPage();
-        tempPage.on('request', request => {
-            const requestUrl = request._url.split('?')[0].split('#')[0];
-            if (
-                block_ressources.indexOf(request.resourceType) !== -1 ||
-                skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
-            ) {
-                request.abort();
-            } else {
-                request.continue();
+    const $ = cheerio.load(await page.content());
+    let urls = [];
+    $(target).each((index, value) => {
+        let url = $('a', value).get()[0];
+        if (url) urls.push(data);
+    });
+    while (urls.length) {
+        let chunks = urls.slice(0, batchCrawl);
+        let pages = [];
+        await Promise.all(chunks.map(async (u) => {
+            const tempPage = await browser.newPage();
+            pages.push(tempPage);
+            if (isOptimized) {
+                tempPage.on('request', request => {
+                    const requestUrl = request._url.split('?')[0].split('#')[0];
+                    if (
+                        block_ressources.indexOf(request.resourceType) !== -1 ||
+                        skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+                    ) {
+                        request.abort();
+                    } else {
+                        request.continue();
+                    }
+                });
             }
-        });
-        pages.push(tempPage);
-        promises.push(starting(script.children, tempPage));
-        await tempPage.goto(url);
+            return starting(script.children, tempPage);
+        }))
+        for (let p of pages) {
+            await p.close();
+        }
     }
-    await Promise.all(promises);
 }
 
 async function pagingLoop(script, page) {
     await starting(script.children, page);
-    await Promise.all([
-        page.waitForNavigation(),
-        page.click(script.target)
-    ]);
-    pagingLoop(script, page);
+    const $ = cheerio.load(await page.content());
+    if ($(script.target).get()) {
+        await Promise.all([
+            page.waitForNavigation(),
+            page.click(script.target)
+        ]);
+        pagingLoop(script, page);
+    }
 }
 
-async function lazyLoadingLoop(script, page) {
-    // Bó cmn tay
+async function lazyLoadingLoop(script, page, stopCondition) {
+    while (stopCondition >= 0) {
+        --stopCondition;
+        await autoScroll(page);
+    }
+    starting(script.children, page);
+}
+
+async function autoScroll(page) {
+    await page.evaluate(async () => {
+        await new Promise((resolve, reject) => {
+            let timer = setInterval(() => {
+                let scrollHeight = document.body.scrollHeight;
+                window.scrollBy(0, scrollHeight);
+                clearInterval(timer);
+                resolve()
+            }, 3000)
+        })
+    });
 }

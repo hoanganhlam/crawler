@@ -23,9 +23,10 @@
         </a-row>
         <a-row>
             <a-col :span="24" class="sub-panel">
-                <a-card :bodyStyle="{padding: '10px'}" title="CONSOLE">
+                <a-card :bodyStyle="{padding: '10px'}" :title="`CONSOLE (${consoleDisplay.length - 1})`">
                     <div v-for="display, id in consoleDisplay" :key="id">
-                        <span v-for="field in display">{{field}}: {{display[field]}}</span>
+                        <div v-for="field in display">{{field}}: {{display[field]}}</div>
+                        <hr>
                     </div>
                 </a-card>
             </a-col>
@@ -60,31 +61,34 @@
                 title: "Lấy hết các phân trang",
                 target: ".next",
                 loop: "PAGING",
-                children: [{
-                    key: '31',
-                    title: "Bóc tách dữ liệu",
-                    action: "EXTRACT",
-                    target: "#col_sticky > article",
-                    fields: [{
-                        field: 'title',
-                        attr: 'innerHTML',
-                        path: 'a',
+                children: [
+                    {
+                        key: '31',
+                        title: "Bóc tách dữ liệu",
+                        action: "EXTRACT",
+                        target: ".sidebar_1 > article",
+                        fields: [
+                            {
+                                field: 'title',
+                                attr: 'innerHTML',
+                                path: 'a',
 
-                    },
-                        {
-                            field: 'url',
-                            attr: 'href',
-                            path: 'a',
+                            },
+                            {
+                                field: 'url',
+                                attr: 'href',
+                                path: 'a',
 
-                        },
-                        {
-                            field: 'description',
-                            attr: 'innerHTML',
-                            path: '.description',
+                            },
+                            {
+                                field: 'description',
+                                attr: 'innerHTML',
+                                path: '.description',
 
-                        }
-                    ]
-                }]
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     }

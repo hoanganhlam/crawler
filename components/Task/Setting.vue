@@ -7,10 +7,16 @@
                         <a-input v-model="form.title"/>
                     </a-form-item>
                     <a-form-item label="Loop" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
-                        <a-switch v-model="form.isLoop" defaultChecked>
-                            <a-icon type="check" slot="checkedChildren"/>
-                            <a-icon type="close" slot="unCheckedChildren"/>
-                        </a-switch>
+                        <a-select
+                            v-model="form.loop"
+                            showSearch
+                            placeholder="Chọn thao tác"
+                            optionFilterProp="children"
+                            style="width: 200px">
+                            <a-select-option value="SINGLE">Đơn</a-select-option>
+                            <a-select-option value="PAGING">Phân trang</a-select-option>
+                            <a-select-option value="LAZY">Lazyload</a-select-option>
+                        </a-select>
                     </a-form-item>
                     <a-form-item v-if="value.hasOwnProperty('tasks')" label="Schedule" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.schedule"/>
@@ -25,7 +31,7 @@
                             <a-select-option value="GOTO">Đi đến</a-select-option>
                             <a-select-option value="CLICK">Nhập chuột</a-select-option>
                             <a-select-option value="EXTRACT">Tách dữ liệu</a-select-option>
-                            <a-select-option value="TYPE">Gõ phím</a-select-option>
+                            <a-select-option value="BACK">Quay lại</a-select-option>
                             <a-select-option value="INPUT">Nhập nội dung</a-select-option>
                         </a-select>
                     </a-form-item>

@@ -43,7 +43,7 @@ export function crawler(scripts, ioP) {
             page.on('request', request => {
                 const requestUrl = request._url.split('?')[0].split('#')[0];
                 if (
-                    block_ressources.indexOf(request.resourceType) !== -1 ||
+                    block_ressources.indexOf(request.resourceType()) !== -1 ||
                     skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
                 ) {
                     request.abort();
@@ -154,7 +154,7 @@ async function singleLoop(script, page, browser) {
                 tempPage.on('request', request => {
                     const requestUrl = request._url.split('?')[0].split('#')[0];
                     if (
-                        block_ressources.indexOf(request.resourceType) !== -1 ||
+                        block_ressources.indexOf(request.resourceType()) !== -1 ||
                         skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
                     ) {
                         request.abort();

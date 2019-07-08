@@ -43,20 +43,13 @@
                                  :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.maxPage"/>
                     </a-form-item>
-                    <a-form-item v-if="form.isLoop" label="Scroll" :label-col="formLayout.labelCol"
-                                 :wrapper-col="formLayout.wrapperCol">
-                        <a-switch v-model="form.scrollDown">
-                            <a-icon type="check" slot="checkedChildren"/>
-                            <a-icon type="close" slot="unCheckedChildren"/>
-                        </a-switch>
-                    </a-form-item>
                     <a-form-item label="Target" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.target"/>
                     </a-form-item>
                 </a-col>
             </a-row>
         </a-form>
-        <div>
+        <div v-if="!value.hasOwnProperty('tasks') && form.action==='EXTRACT'">
             <a-table :columns="columns" :dataSource="form.fields">
                 <template slot="field" slot-scope="text, record">
                     <a-input v-model="record.field"></a-input>

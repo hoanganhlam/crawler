@@ -3,7 +3,7 @@ const batchCrawl = Number(process.env.BATCH_CRAWL || 5);
 const cheerio = require('cheerio');
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
 const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
-let isOptimized = false;
+let isOptimized = true;
 
 var io = null;
 
@@ -107,15 +107,19 @@ async function extractData(target, fields, page) {
     $(target).each((index, value) => {
         let data = {};
         for (let field of fields) {
-            if (!field) {
-                data[field.field] = $(field.path, value).html();
-                continue;
+            if (field.path === '') {
+                data[field.field] = $(value).text();
+            } else {
+                if (!field.attr) {
+                    data[field.field] = $(field.path, value).html();
+                    continue;
+                }
+                if (field.attr === 'innerHTML') {
+                    data[field.field] = $(field.path, value).text();
+                    continue;
+                }
+                data[field.field] = $(field.path, value).attr(field.attr);
             }
-            if (field.attr === 'innerHTML') {
-                data[field.field] = $(field.path, value).text();
-                continue;
-            }
-            data[field.field] = $(field.path, value).attr(field.attr);
         }
         if (io) {
             io.emit('data', data)
@@ -162,20 +166,27 @@ async function singleLoop(script, page, browser) {
 }
 
 async function pagingLoop(script, page) {
-    let stopCondition = script.maxPage;
-    const $ = cheerio.load(await page.content());
-    let target = $(script.target) && $(script.target).attr('href');
-    while (stopCondition > 1 || target) {
+
+    let maxPage = script.maxPage;
+    let isInfinity = false;
+    let loopCondition = true;
+    if (!maxPage) {
+        const $ = cheerio.load(await page.content());
+        loopCondition = $(script.target) && $(script.target).attr('href');
+        isInfinity = true;
+    }
+    while (loopCondition) {
         await starting(script.children, page);
         const $ = cheerio.load(await page.content());
-        target = $(script.target) && $(script.target).attr('href');
+        let target = $(script.target) && $(script.target).attr('href');
         if (target) {
             await page.goto(target, {
                 waitUntil: 'networkidle0',
                 timeout: 360000
             });
         }
-        --stopCondition;
+        maxPage = isInfinity ? 0 : maxPage - 1;
+        loopCondition = isInfinity ? target : maxPage > 1;
     }
 }
 

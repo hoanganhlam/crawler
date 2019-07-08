@@ -1,7 +1,7 @@
 <template>
     <div class="task-panel">
         <a-row :gutter="16" class="bt-16">
-            <a-col :span="8" class="sub-panel">
+            <a-col :span="12" class="sub-panel">
                 <Logic :value="form.tasks" @select="onSelect">
                     <div class="action-bar">
                         <a-row>
@@ -17,7 +17,7 @@
                     </div>
                 </Logic>
             </a-col>
-            <a-col :span="16" class="sub-panel">
+            <a-col :span="12" class="sub-panel">
                 <Setting v-model="selectedNode"/>
             </a-col>
         </a-row>
@@ -54,46 +54,18 @@
                 key: '1',
                 title: "Đến trang chủ",
                 action: "GOTO",
-                target: "https://vnexpress.net/",
+                target: "https://www.factretriever.com/titanic-facts",
             },
             {
-                key: '2',
-                title: "Đến danh mục du lịch",
-                action: "CLICK",
-                target: "#main_menu > a.mnu_dulich",
-            },
-            {
-                key: '3',
-                title: "Lấy hết các phân trang",
-                target: ".next",
-                loop: "PAGING",
-                maxPage: 1,
-                children: [
+                key: '31',
+                title: "Bóc tách dữ liệu",
+                action: "EXTRACT",
+                target: ".factsList li",
+                fields: [
                     {
-                        key: '31',
-                        title: "Bóc tách dữ liệu",
-                        action: "EXTRACT",
-                        target: ".sidebar_1 > article",
-                        fields: [
-                            {
-                                field: 'title',
-                                attr: 'innerHTML',
-                                path: 'a',
-
-                            },
-                            {
-                                field: 'url',
-                                attr: 'href',
-                                path: 'a',
-
-                            },
-                            {
-                                field: 'description',
-                                attr: 'innerHTML',
-                                path: '.description',
-
-                            }
-                        ]
+                        field: 'fact',
+                        attr: 'innerHTML',
+                        path: ''
                     }
                 ]
             }

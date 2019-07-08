@@ -4,7 +4,7 @@
             <a-icon type="check" slot="checkedChildren"/>
             <a-icon type="close" slot="unCheckedChildren"/>
         </a-switch>
-        <v-jsoneditor v-if="isEditor" v-model="structure" :plus="false" height="290px" @error="onError"></v-jsoneditor>
+        <v-jsoneditor v-if="isEditor" v-model="structure" :plus="false" height="230px" @error="onError"></v-jsoneditor>
         <a-tree
             v-else
             :defaultExpandAll="true"

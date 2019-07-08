@@ -18,7 +18,7 @@
                     New
                 </n-link>
             </a-menu-item>
-            <a-menu-item v-for="t in tasks" :key="t.id">
+            <a-menu-item v-for="t in tasks" :key="t._id">
                 <n-link :to="`/task/${t._id}`">
                     <a-icon type="ordered-list"/>
                     {{t.title}}
@@ -40,7 +40,7 @@
         name: "task",
         data() {
             return {
-                current: ['0'],
+
             }
         },
         head() {
@@ -50,14 +50,17 @@
         },
         async asyncData({app, params}) {
             let res = await app.$axios.$get('/tasks')
+            let current = ['0']
             let task = null
             if (params.path) {
+                current = [params.path]
                 let res2 = await app.$axios.$get(`/tasks/${params.path}`)
                 task = res2.body
             }
             return {
                 tasks: res.body,
-                task
+                task,
+                current
             }
         },
         components: {

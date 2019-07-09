@@ -1,6 +1,11 @@
+// import {
+//     async
+// } from 'q';
+
 const puppeteer = require('puppeteer');
 const batchCrawl = Number(process.env.BATCH_CRAWL || 5);
 const cheerio = require('cheerio');
+const axios = require('axios');
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
 const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
 let isOptimized = true;
@@ -12,46 +17,110 @@ var io = null;
  * @script Kịch bản crawler được lưu vào Database
  * Hàm này sẽ lấy kịch bản và map với lại structure
  */
-export function crawler(scripts, ioP) {
-    io = ioP
-    puppeteer.launch({
-        headless: isOptimized,
-        defaultViewport: null,
-        args: ['--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-accelerated-2d-canvas',
-            '--disable-gpu',
-            '--window-size=1920,1080'
-        ]
-    }).then(async browser => {
-        const page = await browser.newPage();
-        if (isOptimized) {
-            await page.setRequestInterception(true);
-            page.on('request', request => {
-                const requestUrl = request._url.split('?')[0].split('#')[0];
-                if (
-                    block_ressources.indexOf(request.resourceType()) !== -1 ||
-                    skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
-                ) {
-                    request.abort();
-                } else {
-                    request.continue();
+
+const SAMPLE = {
+    isHeadless: false,
+    tasks: [{
+            key: '1',
+            title: "Đến trang du lịch",
+            action: "GOTO",
+            target: "https://vnexpress.net/du-lich",
+        },
+        {
+            key: '2',
+            title: "Bóc tách dữ liệu",
+            action: "EXTRACT",
+            target: "#col_sticky > article",
+            fields: [{
+                    field: 'title',
+                    attr: 'innerHTML',
+                    path: 'a',
+
+                },
+                {
+                    field: 'url',
+                    attr: 'href',
+                    path: 'a',
+
+                },
+                {
+                    field: 'description',
+                    attr: 'innerHTML',
+                    path: '.description',
+
                 }
-            });
+            ]
         }
-        await starting(scripts, page);
-        await browser.close();
-    });
+    ]
 }
 
-async function starting(scripts, page) {
-    for (let i = 0; i < scripts.length; i++) {
-        let action = scripts[i];
-        await loopType(action, page);
+crawler(SAMPLE, null);
+
+function crawler(scripts, ioP) {
+    io = ioP
+    if (scripts.isHeadless) {
+        puppeteer.launch({
+            headless: isOptimized,
+            defaultViewport: null,
+            args: ['--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--window-size=1920,1080'
+            ]
+        }).then(async browser => {
+            const page = await browser.newPage();
+            if (isOptimized) {
+                await page.setRequestInterception(true);
+                page.on('request', request => {
+                    const requestUrl = request._url.split('?')[0].split('#')[0];
+                    if (
+                        block_ressources.indexOf(request.resourceType()) !== -1 ||
+                        skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+                    ) {
+                        request.abort();
+                    } else {
+                        request.continue();
+                    }
+                });
+            }
+            await headlessStarting(scripts.tasks, page);
+            await browser.close();
+        });
+    } else {
+        noHeadlessStarting(scripts.tasks, {
+            response: {}
+        });
     }
 }
 
-async function loopType(script, page) {
+async function headlessStarting(scripts, page) {
+    for (let i = 0; i < scripts.length; i++) {
+        let action = scripts[i];
+        await headlessLoopType(action, page);
+    }
+}
+
+async function noHeadlessStarting(scripts, data) {
+    for (let i = 0; i < scripts.length; i++) {
+        let action = scripts[i];
+        await noHeadlessLoopType(action, data);
+    }
+}
+
+async function noHeadlessLoopType(script, data) {
+    var loopType = script.loop;
+    switch (loopType) {
+        case 'ARRAY':
+            await noHeadlessArrayLoop(script);
+            break;
+        default:
+            await noHeadlessActionType(script, data);
+            break;
+    }
+}
+
+async function headlessLoopType(script, page) {
     var loopType = script.loop;
     switch (loopType) {
         case 'SINGLE':
@@ -63,13 +132,30 @@ async function loopType(script, page) {
         case 'LAZY':
             await lazyLoadingLoop(script, page);
             break;
+        case 'ARRAY':
+            await headlessArrayLoop(script);
+            break;
         default:
-            await actionType(script, page);
+            await headlessActionType(script, page);
             break;
     }
 }
 
-async function actionType(script, page) {
+async function noHeadlessActionType(script, data) {
+    var actionType = script.action;
+    switch (actionType) {
+        case 'GOTO':
+            data.response = await axios.get(script.target).catch(err => console.log(err));;
+            break;
+        case 'EXTRACT':
+            noHeadlessExtractData(script.target, script.fields, data);
+            break;
+        default:
+            break;
+    }
+}
+
+async function headlessActionType(script, page) {
     var actionType = script.action;
     switch (actionType) {
         case 'GOTO':
@@ -90,7 +176,7 @@ async function actionType(script, page) {
             await page.type(script.target, script.text);
             break;
         case 'EXTRACT':
-            await extractData(script.target, script.fields, page);
+            await headlessExtractData(script.target, script.fields, page);
             break;
         case 'BACK':
             await page.back();
@@ -100,10 +186,20 @@ async function actionType(script, page) {
     }
 }
 
-async function extractData(target, fields, page) {
+function noHeadlessExtractData(target, fields, data) {
+    const html = data.response.data;
+    extractData(target, fields, html);
+}
+
+async function headlessExtractData(target, fields, page) {
     await page.waitForSelector(target);
+    const html = await page.content();
+    extractData(target, fields, html);
+}
+
+function extractData(target, fields, html) {
     let result = [];
-    const $ = cheerio.load(await page.content());
+    const $ = cheerio.load(html);
     $(target).each((index, value) => {
         let data = {};
         for (let field of fields) {
@@ -126,8 +222,6 @@ async function extractData(target, fields, page) {
         }
         result.push(data);
     });
-    //Save to Database here
-    return result;
 }
 
 async function singleLoop(script, page, browser) {
@@ -157,7 +251,7 @@ async function singleLoop(script, page, browser) {
                     }
                 });
             }
-            return starting(script.children, tempPage);
+            return headlessStarting(script.children, tempPage);
         }))
         for (let p of pages) {
             await p.close();
@@ -176,7 +270,7 @@ async function pagingLoop(script, page) {
         isInfinity = true;
     }
     while (loopCondition) {
-        await starting(script.children, page);
+        await headlessStarting(script.children, page);
         const $ = cheerio.load(await page.content());
         let target = $(script.target) && $(script.target).attr('href');
         if (target) {
@@ -190,13 +284,51 @@ async function pagingLoop(script, page) {
     }
 }
 
+async function noHeadlessArrayLoop(scripts) {
+    let urls = scripts.urls;
+    while (urls.length) {
+        let chunks = urls.slice(0, batchCrawl);
+        let responses = await Promise.all(chunks.map(url => axios.get(url).catch(err => console.log(err))));
+        await Promise.all(responses.map(response => noHeadlessLoopType(scripts.children, {
+            response: response
+        })));
+    }
+}
+
+async function headlessArrayLoop(scripts) {
+    let urls = scripts.urls;
+    while (urls.length) {
+        let pages = [];
+        await Promise.all(chunks.map(async (url) => {
+            const tempPage = await browser.newPage();
+            pages.push(tempPage);
+            if (isOptimized) {
+                await page.setRequestInterception(true)
+                tempPage.on('request', request => {
+                    const requestUrl = request._url.split('?')[0].split('#')[0];
+                    if (
+                        block_ressources.indexOf(request.resourceType()) !== -1 ||
+                        skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+                    ) {
+                        request.abort();
+                    } else {
+                        request.continue();
+                    }
+                });
+            }
+            await tempPage.goto(url);
+            return headlessStarting(script.children, tempPage);
+        }))
+    }
+}
+
 async function lazyLoadingLoop(script, page) {
     let stopCondition = script.stopCondition;
     while (stopCondition > 1) {
         await autoScroll(page);
         --stopCondition;
     }
-    starting(script.children, page);
+    headlessStarting(script.children, page);
 }
 
 async function autoScroll(page) {

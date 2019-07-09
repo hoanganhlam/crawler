@@ -9,7 +9,6 @@ const axios = require('axios');
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
 const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
 let isOptimized = true;
-
 var io = null;
 
 /**
@@ -18,45 +17,7 @@ var io = null;
  * Hàm này sẽ lấy kịch bản và map với lại structure
  */
 
-const SAMPLE = {
-    isHeadless: false,
-    tasks: [{
-            key: '1',
-            title: "Đến trang du lịch",
-            action: "GOTO",
-            target: "https://vnexpress.net/du-lich",
-        },
-        {
-            key: '2',
-            title: "Bóc tách dữ liệu",
-            action: "EXTRACT",
-            target: "#col_sticky > article",
-            fields: [{
-                    field: 'title',
-                    attr: 'innerHTML',
-                    path: 'a',
-
-                },
-                {
-                    field: 'url',
-                    attr: 'href',
-                    path: 'a',
-
-                },
-                {
-                    field: 'description',
-                    attr: 'innerHTML',
-                    path: '.description',
-
-                }
-            ]
-        }
-    ]
-}
-
-crawler(SAMPLE, null);
-
-function crawler(scripts, ioP) {
+export function crawler(scripts, ioP) {
     io = ioP
     if (scripts.isHeadless) {
         puppeteer.launch({
@@ -217,6 +178,7 @@ function extractData(target, fields, html) {
                 data[field.field] = $(field.path, value).attr(field.attr);
             }
         }
+        console.log('wtf');
         if (io) {
             io.emit('data', data)
         }
@@ -289,9 +251,12 @@ async function noHeadlessArrayLoop(scripts) {
     while (urls.length) {
         let chunks = urls.slice(0, batchCrawl);
         let responses = await Promise.all(chunks.map(url => axios.get(url).catch(err => console.log(err))));
-        await Promise.all(responses.map(response => noHeadlessLoopType(scripts.children, {
+        // await Promise.all(responses.map(response => noHeadlessStarting(scripts.children, {
+        //     response: response
+        // })));
+        responses.map(response => noHeadlessStarting(scripts.children, {
             response: response
-        })));
+        }));
     }
 }
 

@@ -65,39 +65,78 @@ const SCRIPT_1 = [{
 
 // Lấy tất cả nội dung có liên quan đến Sơn Tùng MTP
 
-const
-    SCRIPT_2 = [{
-        isLoop: true,
-        stopCondition: "",
-        loopModel: "",
-        scrollDown: false,
+const SAMPLE_2 = {
+    isHeadless: false,
+    tasks: [{
+        key: '1',
+        loop: 'ARRAY',
+        urls: [
+            'https://vnexpress.net/giai-tri',
+            'https://vnexpress.net/giai-tri/p2',
+            'https://vnexpress.net/giai-tri/p3',
+            'https://vnexpress.net/giai-tri/p4',
+            'https://vnexpress.net/giai-tri/p5',
+        ],
         children: [{
-                action: "GOTO",
-                target: "https://vnexpress.net/",
-            },
-            {
-                action: "INPUT",
-                target: ".mnu_dulich",
-                text: "Sơn tùng"
-            },
-            {
-                action: "CLICK",
-                target: "#search button"
-            },
-            {
-                isLoop: true,
-                children: [{
-                    action: "EXTRACT",
-                    field: {
-                        'title': {
-                            path: '.title_news',
-                        },
-                        'url': {
-                            path: '.title_news a',
-                        },
-                        'description': '.description'
-                    },
-                }]
-            }
-        ]
+            key: '2',
+            title: "Bóc tách dữ liệu",
+            action: "EXTRACT",
+            target: "#col_sticky > article",
+            fields: [{
+                    field: 'title',
+                    attr: 'innerHTML',
+                    path: 'a',
+
+                },
+                {
+                    field: 'url',
+                    attr: 'href',
+                    path: 'a',
+
+                },
+                {
+                    field: 'description',
+                    attr: 'innerHTML',
+                    path: '.description',
+
+                }
+            ]
+        }]
     }]
+}
+
+const SAMPLE_3 = {
+    isHeadless: false,
+    tasks: [{
+            key: '1',
+            title: "Đến trang du lịch",
+            action: "GOTO",
+            target: "https://vnexpress.net/du-lich",
+        },
+        {
+            key: '2',
+            title: "Bóc tách dữ liệu",
+            action: "EXTRACT",
+            target: "#col_sticky > article",
+            fields: [{
+                    field: 'title',
+                    attr: 'innerHTML',
+                    path: 'a',
+
+                },
+                {
+                    field: 'url',
+                    attr: 'href',
+                    path: 'a',
+
+                },
+                {
+                    field: 'description',
+                    attr: 'innerHTML',
+                    path: '.description',
+
+                }
+            ]
+        }
+    ]
+}

@@ -1,14 +1,14 @@
-// import {
-//     async
-// } from 'q';
+import {
+    async
+} from 'q';
 
 const puppeteer = require('puppeteer');
-const batchCrawl = Number(process.env.BATCH_CRAWL || 5);
+const batchCrawl = Number(process.env.BATCH_CRAWL || 2);
 const cheerio = require('cheerio');
 const axios = require('axios');
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
 const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
-let isOptimized = true;
+let isOptimized = false;
 var io = null;
 
 /**
@@ -153,7 +153,7 @@ function noHeadlessExtractData(target, fields, data) {
 }
 
 async function headlessExtractData(target, fields, page) {
-    await page.waitForSelector(target);
+    // await page.waitForSelector(target);
     const html = await page.content();
     extractData(target, fields, html);
 }
@@ -161,6 +161,7 @@ async function headlessExtractData(target, fields, page) {
 function extractData(target, fields, html) {
     let result = [];
     const $ = cheerio.load(html);
+    let test = $(target);
     $(target).each((index, value) => {
         let data = {};
         for (let field of fields) {
@@ -178,7 +179,7 @@ function extractData(target, fields, html) {
                 data[field.field] = $(field.path, value).attr(field.attr);
             }
         }
-        console.log('wtf');
+        console.log(data);
         if (io) {
             io.emit('data', data)
         }
@@ -213,11 +214,12 @@ async function singleLoop(script, page, browser) {
                     }
                 });
             }
-            return headlessStarting(script.children, tempPage, browser);
+            await headlessStarting(script.children, tempPage, browser);
+            for (let p of pages) {
+                await p.close();
+            }
         }))
-        for (let p of pages) {
-            await p.close();
-        }
+
     }
 }
 
@@ -250,6 +252,7 @@ async function noHeadlessArrayLoop(scripts) {
     let urls = scripts.urls;
     while (urls.length) {
         let chunks = urls.slice(0, batchCrawl);
+        urls = urls.slice(chunks.length);
         let responses = await Promise.all(chunks.map(url => axios.get(url).catch(err => console.log(err))));
         // await Promise.all(responses.map(response => noHeadlessStarting(scripts.children, {
         //     response: response
@@ -264,12 +267,13 @@ async function headlessArrayLoop(scripts, browser) {
     let urls = scripts.urls;
     while (urls.length) {
         let chunks = urls.slice(0, batchCrawl);
-        let pages = [];
+        urls = urls.slice(chunks.length);
         await Promise.all(chunks.map(async (url) => {
+            let pages = [];
             const tempPage = await browser.newPage();
             pages.push(tempPage);
             if (isOptimized) {
-                await page.setRequestInterception(true)
+                await tempPage.setRequestInterception(true)
                 tempPage.on('request', request => {
                     const requestUrl = request._url.split('?')[0].split('#')[0];
                     if (
@@ -283,7 +287,10 @@ async function headlessArrayLoop(scripts, browser) {
                 });
             }
             await tempPage.goto(url);
-            return headlessStarting(script.children, tempPage, browser);
+            await headlessStarting(scripts.children, tempPage, browser);
+            for (let p of pages) {
+                await p.close();
+            }
         }))
     }
 }

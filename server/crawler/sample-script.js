@@ -81,7 +81,7 @@ const SAMPLE_2 = {
             key: '2',
             title: "Bóc tách dữ liệu",
             action: "EXTRACT",
-            target: "#col_sticky > article",
+            target: "body > section > section.sidebar_1 > article",
             fields: [{
                     field: 'title',
                     attr: 'innerHTML',
@@ -117,7 +117,7 @@ const SAMPLE_3 = {
             key: '2',
             title: "Bóc tách dữ liệu",
             action: "EXTRACT",
-            target: "#col_sticky > article",
+            target: "body > section > section.sidebar_1 > article",
             fields: [{
                     field: 'title',
                     attr: 'innerHTML',

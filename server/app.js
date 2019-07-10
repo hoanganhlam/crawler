@@ -50,7 +50,7 @@ app.post('/api/run', function (req, res, next) {
             if (!instance) {
                 return res.sendStatus(404);
             }
-            crawler(instance.tasks, io)
+            crawler(instance, io)
             return res.sendStatus(200);
         }).catch(next);
 })

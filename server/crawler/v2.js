@@ -224,7 +224,6 @@ async function singleLoop(script, page, browser) {
 }
 
 async function pagingLoop(script, page, browser) {
-
     let maxPage = script.maxPage;
     let isInfinity = false;
     let loopCondition = true;
@@ -286,6 +285,7 @@ async function headlessArrayLoop(scripts, browser) {
                     }
                 });
             }
+            console.log(url);
             await tempPage.goto(url);
             await headlessStarting(scripts.children, tempPage, browser);
             for (let p of pages) {

@@ -22,6 +22,10 @@
                                  :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.schedule"/>
                     </a-form-item>
+                    <a-form-item v-if="value.hasOwnProperty('tasks')" label="Headless" :label-col="formLayout.labelCol"
+                                 :wrapper-col="formLayout.wrapperCol">
+                        <a-switch v-model="form.isHeadless"/>
+                    </a-form-item>
                     <a-form-item v-if="!value.hasOwnProperty('tasks')" label="action" :label-col="formLayout.labelCol"
                                  :wrapper-col="formLayout.wrapperCol">
                         <a-select
@@ -95,7 +99,8 @@
         }, {
             dataIndex: 'operation',
             scopedSlots: {customRender: 'operation'},
-        }];
+        }
+    ];
 
     export default {
         name: "Setting",

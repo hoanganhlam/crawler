@@ -45,7 +45,7 @@ export function crawler(scripts, ioP) {
                     }
                 });
             }
-            await headlessStarting(scripts.tasks, page);
+            await headlessStarting(scripts.tasks, page, browser);
             await browser.close();
         });
     } else {
@@ -55,10 +55,10 @@ export function crawler(scripts, ioP) {
     }
 }
 
-async function headlessStarting(scripts, page) {
+async function headlessStarting(scripts, page, browser) {
     for (let i = 0; i < scripts.length; i++) {
         let action = scripts[i];
-        await headlessLoopType(action, page);
+        await headlessLoopType(action, page, browser);
     }
 }
 
@@ -81,11 +81,11 @@ async function noHeadlessLoopType(script, data) {
     }
 }
 
-async function headlessLoopType(script, page) {
+async function headlessLoopType(script, page, browser) {
     var loopType = script.loop;
     switch (loopType) {
         case 'SINGLE':
-            await singleLoop(script, page);
+            await singleLoop(script, page, browser);
             break;
         case 'PAGING':
             await pagingLoop(script, page);
@@ -94,7 +94,7 @@ async function headlessLoopType(script, page) {
             await lazyLoadingLoop(script, page);
             break;
         case 'ARRAY':
-            await headlessArrayLoop(script);
+            await headlessArrayLoop(script, browser);
             break;
         default:
             await headlessActionType(script, page);
@@ -260,9 +260,10 @@ async function noHeadlessArrayLoop(scripts) {
     }
 }
 
-async function headlessArrayLoop(scripts) {
+async function headlessArrayLoop(scripts, browser) {
     let urls = scripts.urls;
     while (urls.length) {
+        let chunks = urls.slice(0, batchCrawl);
         let pages = [];
         await Promise.all(chunks.map(async (url) => {
             const tempPage = await browser.newPage();

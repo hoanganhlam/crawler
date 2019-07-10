@@ -99,7 +99,8 @@
         }, {
             dataIndex: 'operation',
             scopedSlots: {customRender: 'operation'},
-        }];
+        }
+    ];
 
     export default {
         name: "Setting",

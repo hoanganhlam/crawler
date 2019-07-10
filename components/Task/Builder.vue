@@ -72,7 +72,7 @@
                     key: '31',
                     title: "Bóc tách dữ liệu",
                     action: "EXTRACT",
-                    target: "#col_sticky > article",
+                    target: ".sidebar_1 list_news",
                     fields: [{
                         field: 'title',
                         attr: 'innerHTML',

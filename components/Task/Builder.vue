@@ -49,25 +49,50 @@
         title: "Lấy tin tức du lịch từ VNExpress",
         isLoop: false,
         schedule: "",
+        isHeadless: false,
         tasks: [
             {
                 key: '1',
                 title: "Đến trang chủ",
                 action: "GOTO",
-                target: "https://www.factretriever.com/titanic-facts",
+                target: "https://vnexpress.net/",
             },
             {
-                key: '31',
-                title: "Bóc tách dữ liệu",
-                action: "EXTRACT",
-                target: ".factsList li",
-                fields: [
-                    {
-                        field: 'fact',
+                key: '2',
+                title: "Đến danh mục du lịch",
+                action: "CLICK",
+                target: "#main_menu > a.mnu_dulich",
+            },
+            {
+                key: '3',
+                title: "Lấy hết các phân trang",
+                target: ".next",
+                loop: "PAGING",
+                children: [{
+                    key: '31',
+                    title: "Bóc tách dữ liệu",
+                    action: "EXTRACT",
+                    target: "#col_sticky > article",
+                    fields: [{
+                        field: 'title',
                         attr: 'innerHTML',
-                        path: ''
-                    }
-                ]
+                        path: 'a',
+
+                    },
+                        {
+                            field: 'url',
+                            attr: 'href',
+                            path: 'a',
+
+                        },
+                        {
+                            field: 'description',
+                            attr: 'innerHTML',
+                            path: '.description',
+
+                        }
+                    ]
+                }]
             }
         ]
     }
@@ -112,7 +137,7 @@
             onPost() {
                 if (this.value) {
                     this.$axios.put(`/tasks/${this.value._id}/`, this.form).then(res => {
-                        this.$router.replace({path: `/task/${res.body._id}`})
+                        this.$router.replace({path: `/task/${this.value._id}`})
                     })
                 } else {
                     this.$axios.$post('/tasks/', this.form).then(res => {

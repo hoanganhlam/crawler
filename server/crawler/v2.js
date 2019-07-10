@@ -222,7 +222,6 @@ async function singleLoop(script, page, browser) {
 }
 
 async function pagingLoop(script, page, browser) {
-
     let maxPage = script.maxPage;
     let isInfinity = false;
     let loopCondition = true;
@@ -269,7 +268,7 @@ async function headlessArrayLoop(scripts, browser) {
             const tempPage = await browser.newPage();
             pages.push(tempPage);
             if (isOptimized) {
-                await page.setRequestInterception(true)
+                await tempPage.setRequestInterception(true)
                 tempPage.on('request', request => {
                     const requestUrl = request._url.split('?')[0].split('#')[0];
                     if (
@@ -282,8 +281,9 @@ async function headlessArrayLoop(scripts, browser) {
                     }
                 });
             }
+            console.log(url);
             await tempPage.goto(url);
-            return headlessStarting(script.children, tempPage, browser);
+            return headlessStarting(scripts.children, tempPage, browser);
         }))
     }
 }

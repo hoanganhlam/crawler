@@ -11,6 +11,7 @@ const TaskSchema = new Schema({
     title: String,
     isLoop: Boolean,
     schedule: String,
+    isHeadless: {type: Boolean, default: true},
     tasks: []
 }, {
     versionKey: false,

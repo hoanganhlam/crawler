@@ -4,7 +4,7 @@ const {getBody} = require('./request');
 const {crawler} = require('../crawler/v2')
 
 exports.create = (req, res) => {
-    let data = getBody(req, ['title', 'isLoop', 'tasks', 'schedule']);
+    let data = getBody(req, ['title', 'isLoop', 'tasks', 'schedule', 'isHeadless']);
     let task = new TaskModel(data)
     task.save().then(function () {
         return responseJSON(res, 'Create user successfully', task);
@@ -30,7 +30,7 @@ exports.retrieve = (req, res) => {
 };
 
 exports.update = (req, res) => {
-    let data = getBody(req, ['title', 'tasks', 'schedule', 'isLoop']);
+    let data = getBody(req, ['title', 'tasks', 'schedule', 'isLoop', 'isHeadless']);
     for (let field in data) {
         if (typeof data[field] !== 'undefined') {
             req.instance[field] = data[field];

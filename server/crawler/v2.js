@@ -286,7 +286,10 @@ async function headlessArrayLoop(scripts, browser) {
                 });
             }
             console.log(url);
-            await tempPage.goto(url);
+            await tempPage.goto(url, {
+                waitUntil: 'networkidle0',
+                timeout: 360000
+            });
             await headlessStarting(scripts.children, tempPage, browser);
             for (let p of pages) {
                 await p.close();

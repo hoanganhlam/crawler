@@ -88,10 +88,10 @@ async function headlessLoopType(script, page, browser) {
             await singleLoop(script, page, browser);
             break;
         case 'PAGING':
-            await pagingLoop(script, page);
+            await pagingLoop(script, page, browser);
             break;
         case 'LAZY':
-            await lazyLoadingLoop(script, page);
+            await lazyLoadingLoop(script, page, browser);
             break;
         case 'ARRAY':
             await headlessArrayLoop(script, browser);
@@ -213,7 +213,7 @@ async function singleLoop(script, page, browser) {
                     }
                 });
             }
-            return headlessStarting(script.children, tempPage);
+            return headlessStarting(script.children, tempPage, browser);
         }))
         for (let p of pages) {
             await p.close();
@@ -221,7 +221,7 @@ async function singleLoop(script, page, browser) {
     }
 }
 
-async function pagingLoop(script, page) {
+async function pagingLoop(script, page, browser) {
 
     let maxPage = script.maxPage;
     let isInfinity = false;
@@ -232,7 +232,7 @@ async function pagingLoop(script, page) {
         isInfinity = true;
     }
     while (loopCondition) {
-        await headlessStarting(script.children, page);
+        await headlessStarting(script.children, page, browser);
         const $ = cheerio.load(await page.content());
         let target = $(script.target) && $(script.target).attr('href');
         if (target) {
@@ -283,18 +283,18 @@ async function headlessArrayLoop(scripts, browser) {
                 });
             }
             await tempPage.goto(url);
-            return headlessStarting(script.children, tempPage);
+            return headlessStarting(script.children, tempPage, browser);
         }))
     }
 }
 
-async function lazyLoadingLoop(script, page) {
+async function lazyLoadingLoop(script, page, browser) {
     let stopCondition = script.stopCondition;
     while (stopCondition > 1) {
         await autoScroll(page);
         --stopCondition;
     }
-    headlessStarting(script.children, page);
+    headlessStarting(script.children, page, browser);
 }
 
 async function autoScroll(page) {

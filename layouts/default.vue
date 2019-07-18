@@ -40,7 +40,7 @@
                     @click="()=> collapsed = !collapsed"
                 />
             </a-layout-header>
-            <a-layout-content :style="{ margin: '24px 16px', padding: '24px', background: '#fff', height: 'calc(100vh - 112px)' }">
+            <a-layout-content :style="{ margin: '24px 16px', padding: '24px', background: '#fff', minHeight: 'calc(100vh - 112px)' }">
                 <nuxt/>
             </a-layout-content>
         </a-layout>

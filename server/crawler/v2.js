@@ -3,12 +3,12 @@ import {
 } from 'q';
 
 const puppeteer = require('puppeteer');
-const batchCrawl = Number(process.env.BATCH_CRAWL || 2);
+const batchCrawl = Number(process.env.BATCH_CRAWL || 1);
 const cheerio = require('cheerio');
 const axios = require('axios');
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
 const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
-let isOptimized = false;
+let isOptimized = true;
 var io = null;
 
 /**

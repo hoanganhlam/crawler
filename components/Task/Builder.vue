@@ -53,26 +53,19 @@
         tasks: [
             {
                 key: '1',
-                title: "Đến trang chủ",
-                action: "GOTO",
-                target: "https://vnexpress.net/",
-            },
-            {
-                key: '2',
-                title: "Đến danh mục du lịch",
-                action: "CLICK",
-                target: "#main_menu > a.mnu_dulich",
-            },
-            {
-                key: '3',
-                title: "Lấy hết các phân trang",
-                target: ".next",
-                loop: "PAGING",
+                loop: 'ARRAY',
+                urls: [
+                    'https://vnexpress.net/giai-tri',
+                    'https://vnexpress.net/giai-tri/p2',
+                    'https://vnexpress.net/giai-tri/p3',
+                    'https://vnexpress.net/giai-tri/p4',
+                    'https://vnexpress.net/giai-tri/p5',
+                ],
                 children: [{
-                    key: '31',
+                    key: '2',
                     title: "Bóc tách dữ liệu",
                     action: "EXTRACT",
-                    target: ".sidebar_1 list_news",
+                    target: "body > section > section.sidebar_1 > article",
                     fields: [{
                         field: 'title',
                         attr: 'innerHTML',
@@ -93,8 +86,7 @@
                         }
                     ]
                 }]
-            }
-        ]
+            }]
     }
 
     function searchTree(arr, key) {

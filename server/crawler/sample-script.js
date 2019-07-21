@@ -68,7 +68,7 @@ const SCRIPT_1 = [
 // Lấy tất cả nội dung có liên quan đến Sơn Tùng MTP
 
 const SAMPLE_2 = {
-    isHeadless: false,
+    crawlType: 'Headless',
     tasks: [{
         key: '1',
         loop: 'ARRAY',

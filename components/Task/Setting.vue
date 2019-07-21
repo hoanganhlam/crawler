@@ -114,12 +114,16 @@
                     <a-popconfirm
                         v-if="form.fields"
                         title="Sure to delete?"
-                        @confirm="() => onDelete(record.field)">
+                        @confirm="() => onDelete(record.key)">
                         <a href="javascript:;">Delete</a>
                     </a-popconfirm>
                 </template>
             </a-table>
-            <a-button class="editable-add-btn" @click="handleAdd">Add</a-button>
+            <a-select placeholder="Select field from campaign" style="width: 250px" @change="handleChange">
+                <a-select-option v-for="field in fields" :key="field.key">
+                    {{field.title}}
+                </a-select-option>
+            </a-select>
         </div>
     </a-card>
 </template>
@@ -158,6 +162,12 @@
             value: {
                 type: Object,
                 default: null
+            },
+            fields: {
+                type: Array,
+                default: () => {
+                    return []
+                }
             }
         },
         data() {
@@ -173,18 +183,19 @@
             }
         },
         methods: {
-            handleAdd() {
+            onDelete(key) {
+                const dataSource = [...this.form.fields]
+                this.form.fields = dataSource.filter(item => item.key !== key)
+            },
+
+            handleChange(key) {
                 const newData = {
-                    key: `null`,
+                    key: key,
                     path: null,
                     attr: `innerHTML`,
                 }
                 this.form.fields = [...this.form.fields, newData]
-            },
-            onDelete(field) {
-                const dataSource = [...this.form.fields]
-                this.form.fields = dataSource.filter(item => item.field !== field)
-            },
+            }
         },
         watch: {
             value() {
@@ -206,6 +217,8 @@
                     this.form.urls = this.arrStr.split('\n')
                 }
             }
+        },
+        mounted() {
         }
     }
 </script>

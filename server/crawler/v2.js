@@ -1,3 +1,4 @@
+const {DataModel} = require('core-model');
 const puppeteer = require('puppeteer');
 const batchCrawl = Number(process.env.BATCH_CRAWL || 1);
 const cheerio = require('cheerio');
@@ -14,14 +15,19 @@ var io = null;
  */
 
 let data = {}
-
+let taskId = null
+let isTest = false
 const makeNestedObjWithArrayItemsAsKeys = (arr, value) => {
     const reducer = (acc, item) => ({[item]: acc});
     return arr.reduceRight(reducer, value);
 };
 
-export function crawler(script, ioP) {
+export function crawler(script, ioP, test) {
+    if (test) {
+        isTest = test
+    }
     io = ioP
+    taskId = script._id
     if (script.isHeadless) {
         puppeteer.launch({
             headless: isOptimized,
@@ -110,7 +116,6 @@ async function noHeadlessActionType(script, data) {
     switch (actionType) {
         case 'GOTO':
             data.response = await axios.get(script.target).catch(err => console.log(err));
-            ;
             break;
         case 'EXTRACT':
             noHeadlessExtractData(script, data);
@@ -166,7 +171,6 @@ function extractData(script, html) {
     $(script.target).each((index, value) => {
         let saveFields = script.field ? script.field.split('.') : []
         let traveler = {}
-        console.log(script.fields);
         for (let field of script.fields) {
             if (field.path === '') {
                 traveler[field.key] = $(value).text();
@@ -184,10 +188,21 @@ function extractData(script, html) {
         }
         data = {...data, ...makeNestedObjWithArrayItemsAsKeys(saveFields, traveler)}
         if (script.stop) {
-            if (io) {
-                io.emit('data', data)
+            if (!isTest) {
+                let instance = new DataModel(
+                    {
+                        url: data['url'],
+                        value: data,
+                        task: taskId
+                    }
+                )
+                instance.save()
+            } else {
+                if (io) {
+                    io.emit('data', data)
+                }
             }
-            console.log(data);
+
             data = {}
         }
     });

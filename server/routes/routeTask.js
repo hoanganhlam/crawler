@@ -21,6 +21,5 @@ router.post('/', taskCtrl.create);
 router.get('/:id', taskCtrl.retrieve);
 router.put('/:id', taskCtrl.update);
 router.delete('/:id', taskCtrl.delete);
-router.post('/:id/run', taskCtrl.run);
 
 module.exports = router;

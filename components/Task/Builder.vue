@@ -10,7 +10,8 @@
                             </a-col>
                             <a-col :span="12" style="text-align: right">
                                 <a-button v-if="value" icon="delete" @click="onDelete(value._id)"/>
-                                <a-button v-if="value" icon="play-circle" @click="onPlay(value._id)"/>
+                                <a-button v-if="value" icon="play-circle" @click="onPlay(value._id, true)"/>
+                                <a-button v-if="value" icon="play-circle" @click="onPlay(value._id, false)"/>
                                 <a-button icon="upload" @click="onPost"/>
                             </a-col>
                         </a-row>
@@ -30,7 +31,8 @@
                 </a-card>
             </a-col>
             <a-col :span="12" class="auto-size">
-                <Setting v-model="selectedNode" @delete="deleteNode"/>
+                <Setting v-model="selectedNode" @delete="deleteNode"
+                         :fields="form.campaign ? form.campaign.fields : []"/>
             </a-col>
         </a-row>
     </div>
@@ -165,9 +167,10 @@
                     })
                 }
             },
-            onPlay(id) {
+            onPlay(id, test) {
                 this.$axios.$post(`/run/`, {
-                    id: id
+                    id: id,
+                    isTest: test
                 })
             },
             onAdd() {

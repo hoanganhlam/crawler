@@ -50,8 +50,3 @@ exports.delete = (req, res) => {
         return res.sendStatus(204);
     });
 };
-
-exports.run = (req, res) => {
-    crawler(req.instance.tasks)
-    return res.sendStatus(200);
-};

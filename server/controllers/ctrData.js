@@ -3,11 +3,19 @@ const {responseJSON, responseError} = require('./response');
 const {getBody} = require('./request');
 
 
-exports.create = (req, res) => {
+exports.create = async (req, res) => {
     let data = getBody(req, ['task', 'url', 'value']);
+
+    let test = await DataModel.find({url: data.url})
+    if (test.length) {
+        let instance = test[0]
+        instance.data = data.value
+        instance = await instance.save()
+        return res.json(instance)
+    }
     let task = new DataModel(data)
-    task.save().then(function () {
-        return responseJSON(res, 'SUCCESSFULLY', task);
+    task.save().then(function (instance) {
+        return res.json(instance)
     }).catch(error => {
         let message = error && error.message ? error.message : 'ERROR';
         return responseError(res, message, {messageCode: 'ERROR'});

@@ -32,7 +32,8 @@ const UserSchema = new Schema({
     name: String
 }, {
     versionKey: false,
-    collection: collection
+    collection: collection,
+    timestamps: true
 });
 
 UserSchema.plugin(uniqueValidator, {message: 'is already taken.'});

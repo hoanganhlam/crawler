@@ -55,6 +55,13 @@
 
     }
 
+    .auto-size {
+        .ant-card-body {
+            height: 100%;
+            overflow: auto;
+        }
+    }
+
 }
 
 .bt-16 {
@@ -78,4 +85,13 @@
     .ant-card-extra {
         padding: 5px 0;
     }
+}
+
+.fullwidth {
+    width: 100%;
+}
+
+.ant-input,
+.ant-btn {
+    border-radius: 0;
 }

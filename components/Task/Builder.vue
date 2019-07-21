@@ -2,7 +2,7 @@
     <div class="task-panel">
         <a-row :gutter="16" class="bt-16">
             <a-col :span="12" class="sub-panel">
-                <Logic :value="form.tasks" @select="onSelect">
+                <Logic class="bt-16" :value="form.tasks" @select="onSelect" @input="form.tasks = $event">
                     <div class="action-bar">
                         <a-row>
                             <a-col :span="12">
@@ -16,13 +16,6 @@
                         </a-row>
                     </div>
                 </Logic>
-            </a-col>
-            <a-col :span="12" class="sub-panel">
-                <Setting v-model="selectedNode"/>
-            </a-col>
-        </a-row>
-        <a-row>
-            <a-col :span="24" class="sub-panel">
                 <a-card :bodyStyle="{padding: '10px'}" :title="`CONSOLE (${consoleDisplay.length - 1})`">
                     <div v-for="display, id in consoleDisplay" :key="id"
                          style="margin-bottom: 5px"
@@ -36,6 +29,9 @@
                     </div>
                 </a-card>
             </a-col>
+            <a-col :span="12" class="auto-size">
+                <Setting v-model="selectedNode" @delete="deleteNode"/>
+            </a-col>
         </a-row>
     </div>
 </template>
@@ -45,6 +41,24 @@
     import Setting from './Setting'
     import io from 'socket.io-client'
 
+    const SAMPLE_TASK = {
+        title: null,
+        isLoop: false,
+        schedule: "",
+        isHeadless: false,
+        campaign: null,
+        tasks: []
+    }
+
+    const SAMPLE_LOGIC = {
+        key: null,
+        title: null,
+        action: null,
+        loop: null,
+        target: null,
+        fields: []
+    }
+
     const SAMPLE = {
         title: "Lấy tin tức du lịch từ VNExpress",
         isLoop: false,
@@ -52,6 +66,7 @@
         isHeadless: false,
         tasks: [
             {
+                title: "Loop dữ liệu",
                 key: '1',
                 loop: 'ARRAY',
                 urls: [
@@ -61,31 +76,34 @@
                     'https://vnexpress.net/giai-tri/p4',
                     'https://vnexpress.net/giai-tri/p5',
                 ],
-                children: [{
-                    key: '2',
-                    title: "Bóc tách dữ liệu",
-                    action: "EXTRACT",
-                    target: "body > section > section.sidebar_1 > article",
-                    fields: [{
-                        field: 'title',
-                        attr: 'innerHTML',
-                        path: 'a',
+                children: [
+                    {
+                        key: '2',
+                        title: "Bóc tách dữ liệu",
+                        action: "EXTRACT",
+                        target: "body > section > section.sidebar_1 > article",
+                        fields: [
+                            {
+                                field: 'title',
+                                attr: 'innerHTML',
+                                path: 'a',
 
-                    },
-                        {
-                            field: 'url',
-                            attr: 'href',
-                            path: 'a',
+                            },
+                            {
+                                field: 'url',
+                                attr: 'href',
+                                path: 'a',
 
-                        },
-                        {
-                            field: 'description',
-                            attr: 'innerHTML',
-                            path: '.description',
+                            },
+                            {
+                                field: 'description',
+                                attr: 'innerHTML',
+                                path: '.description',
 
-                        }
-                    ]
-                }]
+                            }
+                        ]
+                    }
+                ]
             }]
     }
 
@@ -102,6 +120,16 @@
         return result;
     }
 
+    function deleteTree(arr, key) {
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i].key === key) {
+                arr = arr.splice(i, 1)
+            } else if (arr[i].children && arr[i].children.length) {
+                deleteTree(arr[i].children, key);
+            }
+        }
+    }
+
     export default {
         name: "Builder",
         components: {
@@ -111,7 +139,7 @@
         props: ['value'],
         data() {
             return {
-                form: this.value ? this.value : SAMPLE,
+                form: this.value ? this.value : SAMPLE_TASK,
                 selectedNode: null,
                 socket: io(`${process.env.WS_URL}`),
                 consoleDisplay: []
@@ -143,12 +171,27 @@
                 })
             },
             onAdd() {
-
+                this.form.tasks.push({
+                    key: (this.form.tasks.length + 1).toString(),
+                    title: 'Step ' + (this.form.tasks.length + 1).toString(),
+                    action: null,
+                    loop: null,
+                    target: null,
+                    fields: [],
+                    urls: [],
+                    field: null,
+                    start: false,
+                    stop: false,
+                })
             },
             onDelete(id) {
                 this.$axios.delete(`/tasks/${id}/`).then(res => {
                     this.$router.replace({path: '/task/'})
                 })
+            },
+            deleteNode(key) {
+                deleteTree(this.form.tasks, key)
+                this.selectedNode = this.form
             }
         },
         created() {

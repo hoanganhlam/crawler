@@ -39,17 +39,38 @@
                     :type="collapsed ? 'menu-unfold' : 'menu-fold'"
                     @click="()=> collapsed = !collapsed"
                 />
+                <div v-if="!$auth.loggedIn" style="float: right;margin-right: 1rem;">
+                    <a-button @click="visible = true" type="primary">
+                        <a-icon type="edit"/>
+                        Đăng nhập
+                    </a-button>
+                </div>
             </a-layout-header>
-            <a-layout-content :style="{ margin: '24px 16px', padding: '24px', background: '#fff', minHeight: 'calc(100vh - 112px)' }">
+            <a-layout-content
+                :style="{ margin: '24px 16px', padding: '24px', background: '#fff', minHeight: 'calc(100vh - 112px)' }">
                 <nuxt/>
             </a-layout-content>
         </a-layout>
+        <a-drawer
+            title="Đăng nhập hệ thống"
+            :width="520"
+            :visible="visible"
+            @close="visible = false"
+            :wrapStyle="{overflow: 'auto'}">
+            <Login @done="visible = false"/>
+        </a-drawer>
     </a-layout>
 </template>
 <script>
+    import Login from '../components/Login'
+
     export default {
+        components: {
+            Login
+        },
         data() {
             return {
+                visible: false,
                 collapsed: false,
                 current: [this.$route.path.substr(1)]
 

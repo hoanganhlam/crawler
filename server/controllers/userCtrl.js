@@ -94,22 +94,18 @@ exports.me = (req, res, next) => {
 };
 
 exports.login = (req, res, next) => {
-    let data = getBody(req, ['username', 'password']);
-    console.log(0);
-    if (!data.username) {
+    let data = getBody(req, ['email', 'password']);
+    if (!data.email) {
         return res.status(422).json({errors: {email: "can't be blank"}});
     }
 
     if (!data.password) {
         return res.status(422).json({errors: {password: "can't be blank"}});
     }
-    console.log(1);
     passport.authenticate('local', {session: false}, function (err, user, info) {
         if (err) {
-            console.log(2);
             return next(err);
         }
-        console.log(3);
         if (user) {
             user.token = user.generateJWT();
             return res.json(user.toAuthJSON());

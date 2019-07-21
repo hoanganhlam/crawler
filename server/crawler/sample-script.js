@@ -18,7 +18,8 @@
 
 
 // Lấy tất cả bài viết thuộc danh mục Du Lịch - VNExpress
-const SCRIPT_1 = [{
+const SCRIPT_1 = [
+    {
         key: '1',
         title: "Đến trang chủ",
         action: "GOTO",
@@ -41,11 +42,11 @@ const SCRIPT_1 = [{
             action: "EXTRACT",
             target: "#col_sticky > article",
             fields: [{
-                    field: 'title',
-                    attr: 'innerHTML',
-                    path: 'a',
+                field: 'title',
+                attr: 'innerHTML',
+                path: 'a',
 
-                },
+            },
                 {
                     field: 'url',
                     attr: 'href',
@@ -59,7 +60,8 @@ const SCRIPT_1 = [{
 
                 }
             ]
-        }]
+        }
+        ]
     }
 ]
 
@@ -83,11 +85,11 @@ const SAMPLE_2 = {
             action: "EXTRACT",
             target: "body > section > section.sidebar_1 > article",
             fields: [{
-                    field: 'title',
-                    attr: 'innerHTML',
-                    path: 'a',
+                field: 'title',
+                attr: 'innerHTML',
+                path: 'a',
 
-                },
+            },
                 {
                     field: 'url',
                     attr: 'href',
@@ -108,22 +110,22 @@ const SAMPLE_2 = {
 const SAMPLE_3 = {
     isHeadless: false,
     tasks: [{
-            key: '1',
-            title: "Đến trang du lịch",
-            action: "GOTO",
-            target: "https://vnexpress.net/du-lich",
-        },
+        key: '1',
+        title: "Đến trang du lịch",
+        action: "GOTO",
+        target: "https://vnexpress.net/du-lich",
+    },
         {
             key: '2',
             title: "Bóc tách dữ liệu",
             action: "EXTRACT",
             target: "body > section > section.sidebar_1 > article",
             fields: [{
-                    field: 'title',
-                    attr: 'innerHTML',
-                    path: 'a',
+                field: 'title',
+                attr: 'innerHTML',
+                path: 'a',
 
-                },
+            },
                 {
                     field: 'url',
                     attr: 'href',

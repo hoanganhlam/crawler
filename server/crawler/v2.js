@@ -1,13 +1,9 @@
-import {
-    async
-} from 'q';
-
 const puppeteer = require('puppeteer');
 const batchCrawl = Number(process.env.BATCH_CRAWL || 1);
 const cheerio = require('cheerio');
 const axios = require('axios');
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
-const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
+const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn',];
 let isOptimized = true;
 var io = null;
 
@@ -17,9 +13,16 @@ var io = null;
  * Hàm này sẽ lấy kịch bản và map với lại structure
  */
 
-export function crawler(scripts, ioP) {
+let data = {}
+
+const makeNestedObjWithArrayItemsAsKeys = (arr, value) => {
+    const reducer = (acc, item) => ({[item]: acc});
+    return arr.reduceRight(reducer, value);
+};
+
+export function crawler(script, ioP) {
     io = ioP
-    if (scripts.isHeadless) {
+    if (script.isHeadless) {
         puppeteer.launch({
             headless: isOptimized,
             defaultViewport: null,
@@ -45,11 +48,11 @@ export function crawler(scripts, ioP) {
                     }
                 });
             }
-            await headlessStarting(scripts.tasks, page, browser);
+            await headlessStarting(script.tasks, page, browser);
             await browser.close();
         });
     } else {
-        noHeadlessStarting(scripts.tasks, {
+        noHeadlessStarting(script.tasks, {
             response: {}
         });
     }
@@ -106,10 +109,11 @@ async function noHeadlessActionType(script, data) {
     var actionType = script.action;
     switch (actionType) {
         case 'GOTO':
-            data.response = await axios.get(script.target).catch(err => console.log(err));;
+            data.response = await axios.get(script.target).catch(err => console.log(err));
+            ;
             break;
         case 'EXTRACT':
-            noHeadlessExtractData(script.target, script.fields, data);
+            noHeadlessExtractData(script, data);
             break;
         default:
             break;
@@ -137,7 +141,7 @@ async function headlessActionType(script, page) {
             await page.type(script.target, script.text);
             break;
         case 'EXTRACT':
-            await headlessExtractData(script.target, script.fields, page);
+            await headlessExtractData(script, page);
             break;
         case 'BACK':
             await page.back();
@@ -147,43 +151,45 @@ async function headlessActionType(script, page) {
     }
 }
 
-function noHeadlessExtractData(target, fields, data) {
+function noHeadlessExtractData(script, data) {
     const html = data.response.data;
-    extractData(target, fields, html);
+    extractData(script, html);
 }
 
-async function headlessExtractData(target, fields, page) {
-    // await page.waitForSelector(target);
+async function headlessExtractData(script, page) {
     const html = await page.content();
-    extractData(target, fields, html);
+    extractData(script, html);
 }
 
-function extractData(target, fields, html) {
-    let result = [];
+function extractData(script, html) {
     const $ = cheerio.load(html);
-    let test = $(target);
-    $(target).each((index, value) => {
-        let data = {};
-        for (let field of fields) {
+    $(script.target).each((index, value) => {
+        let saveFields = script.field ? script.field.split('.') : []
+        let traveler = {}
+        console.log(script.fields);
+        for (let field of script.fields) {
             if (field.path === '') {
-                data[field.field] = $(value).text();
+                traveler[field.key] = $(value).text();
             } else {
                 if (!field.attr) {
-                    data[field.field] = $(field.path, value).html();
+                    traveler[field.key] = $(field.path, value).html();
                     continue;
                 }
                 if (field.attr === 'innerHTML') {
-                    data[field.field] = $(field.path, value).text();
+                    traveler[field.key] = $(field.path, value).text();
                     continue;
                 }
-                data[field.field] = $(field.path, value).attr(field.attr);
+                traveler[field.key] = $(field.path, value).attr(field.attr);
             }
         }
-        console.log(data);
-        if (io) {
-            io.emit('data', data)
+        data = {...data, ...makeNestedObjWithArrayItemsAsKeys(saveFields, traveler)}
+        if (script.stop) {
+            if (io) {
+                io.emit('data', data)
+            }
+            console.log(data);
+            data = {}
         }
-        result.push(data);
     });
 }
 

@@ -6,7 +6,7 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 require('./helpers/load-env');
 
-const userRoute = require('./routes/userRoute');
+const userRoute = require('./routes/routeUser');
 
 const app = express();
 app.use(httpLogger('dev'));

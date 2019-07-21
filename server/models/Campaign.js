@@ -5,15 +5,12 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
 const Schema = mongoose.Schema;
-const collection = 'Task';
+const collection = 'Campaign';
 
 const NewSchema = new Schema({
     title: String,
-    isLoop: Boolean,
-    schedule: String,
-    isHeadless: {type: Boolean, default: true},
-    tasks: [],
-    campaign: {type: mongoose.Schema.Types.ObjectId, ref: 'Campaign'},
+    user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    fields: [{title: String, key: String}]
 }, {
     versionKey: false,
     collection: collection,

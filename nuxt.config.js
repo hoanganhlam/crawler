@@ -41,6 +41,7 @@ export default {
     modules: [
         // Doc: https://axios.nuxtjs.org/usage
         '@nuxtjs/axios',
+        '@nuxtjs/auth',
     ],
     /*
     ** Axios module configuration
@@ -48,6 +49,45 @@ export default {
     */
     axios: {
         baseURL: process.env.API_DOMAIN + '/api'
+    },
+    auth: {
+        strategies: {
+            local: {
+                endpoints: {
+                    login: {
+                        url: '/users/login/',
+                        method: 'post',
+                        propertyName: 'token',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    },
+                    logout: {
+                        method: 'post',
+                        url: '/users/logout/'
+                    },
+                    user: {
+                        url: '/users/me/',
+                        method: 'get',
+                        propertyName: ''
+                    }
+                },
+                tokenRequired: true,
+                tokenType: 'Bearer'
+            },
+            google: {
+                client_id:
+                    '1031942923634-j4m66uaj8toiphphkj2q8q0thkh9horu.apps.googleusercontent.com',
+                redirect_uri: process.env.DOMAIN + '/member/callback'
+            }
+        },
+        redirect: {
+            login: '/login',
+            logout: '/logout',
+            callback: '/auth/callback',
+            user: '/users/me'
+        },
     },
     /*
     ** Build configuration

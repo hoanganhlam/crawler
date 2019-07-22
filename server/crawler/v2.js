@@ -175,15 +175,22 @@ function extractData(script, html) {
             if (field.path === '') {
                 traveler[field.key] = $(value).text();
             } else {
-                if (!field.attr) {
-                    traveler[field.key] = $(field.path, value).html();
-                    continue;
+                let arrTemp = []
+                if (field.attr === null || field.attr === '') {
+
+                    $(field.path, value).each(function (i, elem) {
+                        arrTemp.push($(this).html())
+                    })
+                } else if (field.attr === 'innerHTML') {
+                    $(field.path, value).each(function (i, elem) {
+                        arrTemp.push($(this).text())
+                    })
+                } else {
+                    $(field.path, value).each(function (i, elem) {
+                        arrTemp.push($(this).attr(field.attr));
+                    })
                 }
-                if (field.attr === 'innerHTML') {
-                    traveler[field.key] = $(field.path, value).text();
-                    continue;
-                }
-                traveler[field.key] = $(field.path, value).attr(field.attr);
+                traveler[field.key] = arrTemp;
             }
         }
         data = {...data, ...makeNestedObjWithArrayItemsAsKeys(saveFields, traveler)}

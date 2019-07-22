@@ -33,7 +33,7 @@ export function crawler(script, ioP, test) {
     io = ioP
     taskId = script._id
     switch (script.crawlType) {
-        case 'Headless': {
+        case 'HEADLESS': {
             puppeteer.launch({
                 headless: isOptimized,
                 defaultViewport: null,
@@ -64,13 +64,14 @@ export function crawler(script, ioP, test) {
             });
             break;
         }
-        case 'noHeadless': {
+        case 'NOHEADLESS': {
             noHeadlessCrawling(script.tasks, {
                 response: {}
             });
             break;
         }
         case 'API': {
+            apiCrawling(script.task)
             break;
         }
         default:
@@ -80,7 +81,7 @@ export function crawler(script, ioP, test) {
 
 async function apiCrawling(scripts) {
     const urls = scripts.urls
-    const results = await Promise.all(urls.map(url => axios.get(url).catch(err => console.log(err))))
+    const results = await Promise.all(urls.map(url => axios.get(url).catch(err => io.emit('error', err))))
     // save data
 }
 
@@ -135,7 +136,7 @@ async function noHeadlessActionType(script, data) {
     var actionType = script.action;
     switch (actionType) {
         case 'GOTO':
-            data.response = await axios.get(script.target).catch(err => console.log(err));
+            data.response = await axios.get(script.target).catch(err => io.emit('error', err));
             break;
         case 'EXTRACT':
             noHeadlessExtractData(script, data);
@@ -304,7 +305,7 @@ async function noHeadlessArrayLoop(scripts) {
     while (urls.length) {
         let chunks = urls.slice(0, batchCrawl);
         urls = urls.slice(chunks.length);
-        let responses = await Promise.all(chunks.map(url => axios.get(url).catch(err => console.log(err))));
+        let responses = await Promise.all(chunks.map(url => axios.get(url).catch(err => io.emit('error', err))));
         // await Promise.all(responses.map(response => noHeadlessStarting(scripts.children, {
         //     response: response
         // })));

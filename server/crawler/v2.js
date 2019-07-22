@@ -1,11 +1,13 @@
-const {DataModel} = require('core-model');
+const {
+    DataModel
+} = require('core-model');
 const puppeteer = require('puppeteer');
 const batchCrawl = Number(process.env.BATCH_CRAWL || 1);
 const cheerio = require('cheerio');
 const axios = require('axios');
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
-const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn',];
-let isOptimized = true;
+const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
+let isOptimized = false;
 var io = null;
 
 /**
@@ -18,7 +20,9 @@ let data = {}
 let taskId = null
 let isTest = false
 const makeNestedObjWithArrayItemsAsKeys = (arr, value) => {
-    const reducer = (acc, item) => ({[item]: acc});
+    const reducer = (acc, item) => ({
+        [item]: acc
+    });
     return arr.reduceRight(reducer, value);
 };
 
@@ -28,50 +32,67 @@ export function crawler(script, ioP, test) {
     }
     io = ioP
     taskId = script._id
-    if (script.isHeadless) {
-        puppeteer.launch({
-            headless: isOptimized,
-            defaultViewport: null,
-            args: ['--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-accelerated-2d-canvas',
-                '--disable-gpu',
-                '--window-size=1920,1080'
-            ]
-        }).then(async browser => {
-            const page = await browser.newPage();
-            if (isOptimized) {
-                await page.setRequestInterception(true);
-                page.on('request', request => {
-                    const requestUrl = request._url.split('?')[0].split('#')[0];
-                    if (
-                        block_ressources.indexOf(request.resourceType()) !== -1 ||
-                        skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
-                    ) {
-                        request.abort();
-                    } else {
-                        request.continue();
-                    }
-                });
-            }
-            await headlessStarting(script.tasks, page, browser);
-            await browser.close();
-        });
-    } else {
-        noHeadlessStarting(script.tasks, {
-            response: {}
-        });
+    switch (script.crawlType) {
+        case 'HEADLESS': {
+            puppeteer.launch({
+                headless: isOptimized,
+                defaultViewport: null,
+                args: ['--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-accelerated-2d-canvas',
+                    '--disable-gpu',
+                    '--window-size=1920,1080'
+                ]
+            }).then(async browser => {
+                const page = await browser.newPage();
+                if (isOptimized) {
+                    await page.setRequestInterception(true);
+                    page.on('request', request => {
+                        const requestUrl = request._url.split('?')[0].split('#')[0];
+                        if (
+                            block_ressources.indexOf(request.resourceType()) !== -1 ||
+                            skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+                        ) {
+                            request.abort();
+                        } else {
+                            request.continue();
+                        }
+                    });
+                }
+                await headlessCrawling(script.tasks, page, browser);
+                await browser.close();
+            });
+            break;
+        }
+        case 'NOHEADLESS': {
+            noHeadlessCrawling(script.tasks, {
+                response: {}
+            });
+            break;
+        }
+        case 'API': {
+            apiCrawling(script.task)
+            break;
+        }
+        default:
+            break;
     }
 }
 
-async function headlessStarting(scripts, page, browser) {
+async function apiCrawling(scripts) {
+    const urls = scripts.urls
+    const results = await Promise.all(urls.map(url => axios.get(url).catch(err => io.emit('error', err))))
+    // save data
+}
+
+async function headlessCrawling(scripts, page, browser) {
     for (let i = 0; i < scripts.length; i++) {
         let action = scripts[i];
         await headlessLoopType(action, page, browser);
     }
 }
 
-async function noHeadlessStarting(scripts, data) {
+async function noHeadlessCrawling(scripts, data) {
     for (let i = 0; i < scripts.length; i++) {
         let action = scripts[i];
         await noHeadlessLoopType(action, data);
@@ -115,7 +136,7 @@ async function noHeadlessActionType(script, data) {
     var actionType = script.action;
     switch (actionType) {
         case 'GOTO':
-            data.response = await axios.get(script.target).catch(err => console.log(err));
+            data.response = await axios.get(script.target).catch(err => io.emit('error', err));
             break;
         case 'EXTRACT':
             noHeadlessExtractData(script, data);
@@ -135,11 +156,21 @@ async function headlessActionType(script, page) {
             });
             break;
         case 'CLICK':
-            await page.waitForSelector(script.target);
-            await Promise.all([
-                page.click(script.target),
-                page.waitForNavigation(),
-            ]);
+            // await page.waitForSelector(script.target);
+            const $ = cheerio.load(await page.content());
+            const isRedirectToOtherPage = $('a', script.target).get().length !== 0 || $(script.target).attr('href')
+            if (isRedirectToOtherPage) {
+                await Promise.all([
+                    page.click(script.target),
+                    page.waitForNavigation(),
+                ]);
+            } else {
+                await Promise.race([
+                    page.click(script.target),
+                    page.waitForNavigation(),
+                ]);
+            }
+
             break;
         case 'INPUT':
             await page.waitForSelector(script.target);
@@ -193,16 +224,17 @@ function extractData(script, html) {
                 traveler[field.key] = arrTemp;
             }
         }
-        data = {...data, ...makeNestedObjWithArrayItemsAsKeys(saveFields, traveler)}
+        data = {
+            ...data,
+            ...makeNestedObjWithArrayItemsAsKeys(saveFields, traveler)
+        }
         if (script.stop) {
             if (!isTest) {
-                let instance = new DataModel(
-                    {
-                        url: data['url'],
-                        value: data,
-                        task: taskId
-                    }
-                )
+                let instance = new DataModel({
+                    url: data['url'],
+                    value: data,
+                    task: taskId
+                })
                 instance.save()
             } else {
                 if (io) {
@@ -242,7 +274,7 @@ async function singleLoop(script, page, browser) {
                     }
                 });
             }
-            await headlessStarting(script.children, tempPage, browser);
+            await headlessCrawling(script.children, tempPage, browser);
             for (let p of pages) {
                 await p.close();
             }
@@ -261,7 +293,7 @@ async function pagingLoop(script, page, browser) {
         isInfinity = true;
     }
     while (loopCondition) {
-        await headlessStarting(script.children, page, browser);
+        await headlessCrawling(script.children, page, browser);
         const $ = cheerio.load(await page.content());
         let target = $(script.target) && $(script.target).attr('href');
         if (target) {
@@ -280,11 +312,11 @@ async function noHeadlessArrayLoop(scripts) {
     while (urls.length) {
         let chunks = urls.slice(0, batchCrawl);
         urls = urls.slice(chunks.length);
-        let responses = await Promise.all(chunks.map(url => axios.get(url).catch(err => console.log(err))));
+        let responses = await Promise.all(chunks.map(url => axios.get(url).catch(err => io.emit('error', err))));
         // await Promise.all(responses.map(response => noHeadlessStarting(scripts.children, {
         //     response: response
         // })));
-        responses.map(response => noHeadlessStarting(scripts.children, {
+        responses.map(response => noHeadlessCrawling(scripts.children, {
             response: response
         }));
     }
@@ -318,7 +350,7 @@ async function headlessArrayLoop(scripts, browser) {
                 waitUntil: 'networkidle0',
                 timeout: 360000
             });
-            await headlessStarting(scripts.children, tempPage, browser);
+            await headlessCrawling(scripts.children, tempPage, browser);
             for (let p of pages) {
                 await p.close();
             }
@@ -332,7 +364,7 @@ async function lazyLoadingLoop(script, page, browser) {
         await autoScroll(page);
         --stopCondition;
     }
-    headlessStarting(script.children, page, browser);
+    headlessCrawling(script.children, page, browser);
 }
 
 async function autoScroll(page) {

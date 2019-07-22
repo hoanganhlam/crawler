@@ -85,29 +85,11 @@ async function apiCrawling(scripts) {
     // save data
 }
 
+
 async function headlessCrawling(scripts, page, browser) {
     for (let i = 0; i < scripts.length; i++) {
         let action = scripts[i];
         await headlessLoopType(action, page, browser);
-    }
-}
-
-async function noHeadlessCrawling(scripts, data) {
-    for (let i = 0; i < scripts.length; i++) {
-        let action = scripts[i];
-        await noHeadlessLoopType(action, data);
-    }
-}
-
-async function noHeadlessLoopType(script, data) {
-    var loopType = script.loop;
-    switch (loopType) {
-        case 'ARRAY':
-            await noHeadlessArrayLoop(script);
-            break;
-        default:
-            await noHeadlessActionType(script, data);
-            break;
     }
 }
 
@@ -128,20 +110,6 @@ async function headlessLoopType(script, page, browser) {
             break;
         default:
             await headlessActionType(script, page);
-            break;
-    }
-}
-
-async function noHeadlessActionType(script, data) {
-    var actionType = script.action;
-    switch (actionType) {
-        case 'GOTO':
-            data.response = await axios.get(script.target).catch(err => io.emit('error', err));
-            break;
-        case 'EXTRACT':
-            noHeadlessExtractData(script, data);
-            break;
-        default:
             break;
     }
 }
@@ -187,70 +155,91 @@ async function headlessActionType(script, page) {
     }
 }
 
-function noHeadlessExtractData(script, data) {
-    const html = data.response.data;
-    extractData(script, html);
-}
-
 async function headlessExtractData(script, page) {
     const html = await page.content();
     extractData(script, html);
 }
 
-function extractData(script, html) {
-    const $ = cheerio.load(html);
-    $(script.target).each((index, value) => {
-        let saveFields = script.field ? script.field.split('.') : []
-        let traveler = {}
-        for (let field of script.fields) {
-            if (field.path === '') {
-                traveler[field.key] = $(value).text();
-            } else {
-                let arrTemp = []
-                if (field.attr === null || field.attr === '') {
-
-                    $(field.path, value).each(function (i, elem) {
-                        arrTemp.push($(this).html())
-                    })
-                } else if (field.attr === 'innerHTML') {
-                    $(field.path, value).each(function (i, elem) {
-                        arrTemp.push($(this).text())
-                    })
-                } else {
-                    $(field.path, value).each(function (i, elem) {
-                        arrTemp.push($(this).attr(field.attr));
-                    })
-                }
-                traveler[field.key] = arrTemp;
+async function headlessArrayLoop(scripts, browser) {
+    let urls = scripts.urls;
+    while (urls.length) {
+        let chunks = urls.slice(0, batchCrawl);
+        urls = urls.slice(chunks.length);
+        await Promise.all(chunks.map(async (url) => {
+            let pages = [];
+            const tempPage = await browser.newPage();
+            pages.push(tempPage);
+            if (isOptimized) {
+                await tempPage.setRequestInterception(true)
+                tempPage.on('request', request => {
+                    const requestUrl = request._url.split('?')[0].split('#')[0];
+                    if (
+                        block_ressources.indexOf(request.resourceType()) !== -1 ||
+                        skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+                    ) {
+                        request.abort();
+                    } else {
+                        request.continue();
+                    }
+                });
             }
-        }
-        data = {
-            ...data,
-            ...makeNestedObjWithArrayItemsAsKeys(saveFields, traveler)
-        }
-        if (script.stop) {
-            if (!isTest) {
-                let instance = new DataModel({
-                    url: data['url'],
-                    value: data,
-                    task: taskId
-                })
-                instance.save()
-            } else {
-                if (io) {
-                    io.emit('data', data)
-                }
+            console.log(url);
+            await tempPage.goto(url, {
+                waitUntil: 'networkidle0',
+                timeout: 360000
+            });
+            await headlessCrawling(scripts.children, tempPage, browser);
+            for (let p of pages) {
+                await p.close();
             }
-
-            data = {}
-        }
-    });
+        }))
+    }
 }
+
+
+async function noHeadlessCrawling(scripts, data) {
+    for (let i = 0; i < scripts.length; i++) {
+        let action = scripts[i];
+        await noHeadlessLoopType(action, data);
+    }
+}
+
+async function noHeadlessLoopType(script, data) {
+    var loopType = script.loop;
+    switch (loopType) {
+        case 'ARRAY':
+            await noHeadlessArrayLoop(script);
+            break;
+        default:
+            await noHeadlessActionType(script, data);
+            break;
+    }
+}
+
+async function noHeadlessActionType(script, data) {
+    var actionType = script.action;
+    switch (actionType) {
+        case 'GOTO':
+            data.response = await axios.get(script.target).catch(err => io.emit('error', err));
+            break;
+        case 'EXTRACT':
+            noHeadlessExtractData(script, data);
+            break;
+        default:
+            break;
+    }
+}
+
+function noHeadlessExtractData(script, data) {
+    const html = data.response.data;
+    extractData(script, html);
+}
+
 
 async function singleLoop(script, page, browser) {
     const $ = cheerio.load(await page.content());
     let urls = [];
-    $(target).each((index, value) => {
+    $(script.target).each((index, value) => {
         let url = $('a', value).get()[0];
         if (url) urls.push(data);
     });
@@ -322,42 +311,6 @@ async function noHeadlessArrayLoop(scripts) {
     }
 }
 
-async function headlessArrayLoop(scripts, browser) {
-    let urls = scripts.urls;
-    while (urls.length) {
-        let chunks = urls.slice(0, batchCrawl);
-        urls = urls.slice(chunks.length);
-        await Promise.all(chunks.map(async (url) => {
-            let pages = [];
-            const tempPage = await browser.newPage();
-            pages.push(tempPage);
-            if (isOptimized) {
-                await tempPage.setRequestInterception(true)
-                tempPage.on('request', request => {
-                    const requestUrl = request._url.split('?')[0].split('#')[0];
-                    if (
-                        block_ressources.indexOf(request.resourceType()) !== -1 ||
-                        skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
-                    ) {
-                        request.abort();
-                    } else {
-                        request.continue();
-                    }
-                });
-            }
-            console.log(url);
-            await tempPage.goto(url, {
-                waitUntil: 'networkidle0',
-                timeout: 360000
-            });
-            await headlessCrawling(scripts.children, tempPage, browser);
-            for (let p of pages) {
-                await p.close();
-            }
-        }))
-    }
-}
-
 async function lazyLoadingLoop(script, page, browser) {
     let stopCondition = script.stopCondition;
     while (stopCondition > 1) {
@@ -377,5 +330,56 @@ async function autoScroll(page) {
                 resolve()
             }, 3000)
         })
+    });
+}
+
+
+function extractData(script, html) {
+    const $ = cheerio.load(html);
+    $(script.target).each((index, value) => {
+        let saveFields = script.field ? script.field.split('.') : []
+        let traveler = {}
+        for (let field of script.fields) {
+            if (field.path === '') {
+                traveler[field.key] = $(value).text();
+            } else {
+                let arrTemp = []
+                if (field.attr === null || field.attr === '') {
+
+                    $(field.path, value).each(function (i, elem) {
+                        arrTemp.push($(this).html())
+                    })
+                } else if (field.attr === 'innerHTML') {
+                    $(field.path, value).each(function (i, elem) {
+                        arrTemp.push($(this).text())
+                    })
+                } else {
+                    $(field.path, value).each(function (i, elem) {
+                        arrTemp.push($(this).attr(field.attr));
+                    })
+                }
+                traveler[field.key] = arrTemp.length === 1 ? arrTemp[0] : arrTemp;
+            }
+        }
+        data = {
+            ...data,
+            ...makeNestedObjWithArrayItemsAsKeys(saveFields, traveler)
+        }
+        if (script.stop) {
+            if (!isTest) {
+                let instance = new DataModel({
+                    url: data['url'],
+                    value: data,
+                    task: taskId
+                })
+                instance.save()
+            } else {
+                if (io) {
+                    io.emit('data', data)
+                }
+            }
+
+            data = {}
+        }
     });
 }

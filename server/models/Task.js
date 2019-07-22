@@ -12,6 +12,7 @@ const NewSchema = new Schema({
     isLoop: Boolean,
     schedule: String,
     isHeadless: {type: Boolean, default: true},
+    crawlType: String,
     tasks: [],
     campaign: {type: mongoose.Schema.Types.ObjectId, ref: 'Campaign'},
 }, {

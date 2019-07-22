@@ -18,6 +18,12 @@
 
     export default {
         name: "ObjectSelect",
+        props: {
+            data: {
+                type: Object,
+                default: null
+            }
+        },
         data() {
             this.fetchTopic = debounce(this.fetchTopic, 500);
             return {
@@ -45,6 +51,12 @@
                 this.$emit('selected', selected)
             }
         },
+        created() {
+            if (this.data) {
+                this.topics = [this.data]
+                this.selected = [this.data._id]
+            }
+        }
     }
 </script>
 

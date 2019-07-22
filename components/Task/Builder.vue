@@ -9,24 +9,39 @@
                                 <a-button icon="plus" @click="onAdd"/>
                             </a-col>
                             <a-col :span="12" style="text-align: right">
-                                <a-button v-if="value" icon="delete" @click="onDelete(value._id)"/>
-                                <a-button v-if="value" icon="play-circle" @click="onPlay(value._id, true)"/>
-                                <a-button v-if="value" icon="play-circle" @click="onPlay(value._id, false)"/>
+                                <span v-if="value">
+                                    <a-popconfirm title="Are you sure delete this task?"
+                                                  @confirm="onDelete(value._id)"
+                                                  okText="Yes" cancelText="No">
+                                        <a-button icon="delete"/>
+                                    </a-popconfirm>
+                                    <a-tooltip placement="topLeft" title="Run test">
+                                        <a-button icon="play-circle" @click="onPlay(value._id, true)"/>
+                                    </a-tooltip>
+                                    <a-tooltip placement="topLeft" title="Run & save data">
+                                        <a-button icon="play-circle" @click="onPlay(value._id, false)"/>
+                                    </a-tooltip>
+                                </span>
                                 <a-button icon="upload" @click="onPost"/>
                             </a-col>
                         </a-row>
                     </div>
                 </Logic>
-                <a-card :bodyStyle="{padding: '10px'}" :title="`CONSOLE (${consoleDisplay.length - 1})`">
-                    <div v-for="display, id in consoleDisplay" :key="id"
-                         style="margin-bottom: 5px"
-                         class="ant-alert ant-alert-info">
-                        <div class="ant-alert-message">
-                            <div v-for="field in Object.keys(display)" :key="id + field">
-                                {{field}} : {{display[field]}}
+                <a-card :bodyStyle="{padding: '10px'}" :title="`CONSOLE (${consoleDisplay.length})`">
+                    <a-button slot="extra" size="small" @click="consoleDisplay = []">
+                        <a-icon type="sync"></a-icon>
+                    </a-button>
+                    <div>
+                        <div v-for="(display, id) in consoleDisplay" :key="id"
+                             style="margin-bottom: 5px"
+                             class="ant-alert ant-alert-info">
+                            <div class="ant-alert-message">
+                                <div v-for="field in Object.keys(display)" :key="id + field">
+                                    {{field}} : {{display[field]}}
+                                </div>
                             </div>
+                            <span class="ant-alert-description"></span>
                         </div>
-                        <span class="ant-alert-description"></span>
                     </div>
                 </a-card>
             </a-col>
@@ -49,7 +64,9 @@
         schedule: "",
         isHeadless: false,
         campaign: null,
-        tasks: []
+        tasks: [],
+        // NOHEADLESS, API, HEADLESS
+        crawlType: 'NOHEADLESS'
     }
 
     const SAMPLE_LOGIC = {
@@ -183,7 +200,6 @@
                     fields: [],
                     urls: [],
                     field: null,
-                    start: false,
                     stop: false,
                 })
             },

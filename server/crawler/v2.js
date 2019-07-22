@@ -71,7 +71,7 @@ export function crawler(script, ioP, test) {
             break;
         }
         case 'API': {
-            apiCrawling(script.task)
+            apiCrawling(script.tasks)
             break;
         }
         default:

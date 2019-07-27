@@ -83,16 +83,19 @@ class Headless {
                     if (!starting) {
                         let page = this.traveler[task.key]
                         await page.waitForSelector(this.options['loopPath']);
-                        task['options']['actionTarget'] = this.options['loopPath']
-                        // let html = await page.content();
-                        // let $ = cheerio.load(html);
-                        // let target = $(this.options['loopPath']).attr('href');
+                        if (task.action === 'GOTO') {
+                            let html = await page.content();
+                            let $ = cheerio.load(html);
+                            let target = $(this.options['loopPath']).attr('href');
 
-                        // if (target) {
-                        //     task['options']['actionTarget'] = target
-                        // } else {
-                        //     break
-                        // }
+                            if (target) {
+                                task['options']['actionTarget'] = target
+                            } else {
+                                break
+                            }
+                        } else if (task.action === 'CLICK') {
+                            task['options']['actionTarget'] = this.options['loopPath']
+                        }
                     }
                     starting = false
                     await this.handleAction(task)
@@ -117,7 +120,6 @@ class Headless {
         let page = this.traveler[task['options']['extractKey']]
         switch (task.action) {
             case 'GOTO':
-                console.log('GOTO');
                 let params = {}
                 if (this.options['loopPath']) {
                 }
@@ -136,12 +138,10 @@ class Headless {
                 }
                 break
             case 'CLICK':
-                console.log('CLICK');
                 if (page) {
                     await page.waitForSelector(task['options']['actionTarget']);
                     const $ = cheerio.load(await page.content());
                     let url = $(task['options']['actionTarget']).attr('href')
-                    console.log(url);
                     if (url) {
                         await page.goto(url, {
                             waitUntil: 'networkidle2'
@@ -150,15 +150,16 @@ class Headless {
                         await page.click(task['options']['actionTarget']);
                     }
                 }
+                if (task.children) {
+                    await this.start(task.children, this.traveler)
+                }
                 break
             case 'BACK':
-                console.log('BACK');
                 if (page) {
                     await page.back()
                 }
                 break
             case 'INPUT':
-                console.log('INPUT');
                 if (page) {
                     await page.waitForSelector(task['options']['actionTarget']);
                     await page.type(task['options']['actionTarget'], task.text);

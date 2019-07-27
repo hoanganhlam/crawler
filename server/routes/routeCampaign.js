@@ -21,5 +21,5 @@ router.post('/', auth.required, taskCtrl.create);
 router.get('/:id', auth.optional, taskCtrl.retrieve);
 router.put('/:id', auth.optional, taskCtrl.update);
 router.delete('/:id', auth.optional, taskCtrl.delete);
-
+router.delete('/:id/data/', auth.optional, taskCtrl.deleteData);
 module.exports = router;

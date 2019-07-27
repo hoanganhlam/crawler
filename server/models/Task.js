@@ -9,12 +9,10 @@ const collection = 'Task';
 
 const NewSchema = new Schema({
     title: String,
-    isLoop: Boolean,
-    schedule: String,
-    isHeadless: {type: Boolean, default: true},
     crawlType: String,
     tasks: [],
     campaign: {type: mongoose.Schema.Types.ObjectId, ref: 'Campaign'},
+    options: Object
 }, {
     versionKey: false,
     collection: collection,

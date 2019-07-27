@@ -14,22 +14,13 @@
                     <a-form-item label="Title" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.title"/>
                     </a-form-item>
+                    <a-form-item label="Type" v-if="!value.hasOwnProperty('tasks')"
+                                 :label-col="formLayout.labelCol"
+                                 :wrapper-col="formLayout.wrapperCol">
+                        <a-switch v-model="isLoop" checkedChildren="Loop" unCheckedChildren="Action" defaultChecked/>
+                    </a-form-item>
                     <div v-if="!value.hasOwnProperty('tasks')">
-                        <a-form-item label="action" :label-col="formLayout.labelCol"
-                                     :wrapper-col="formLayout.wrapperCol">
-                            <a-select
-                                v-model="form.action"
-                                showSearch
-                                placeholder="Chọn thao tác"
-                                optionFilterProp="children">
-                                <a-select-option value="GOTO">Đi đến</a-select-option>
-                                <a-select-option value="CLICK">Nhập chuột</a-select-option>
-                                <a-select-option value="EXTRACT">Tách dữ liệu</a-select-option>
-                                <a-select-option value="BACK">Quay lại</a-select-option>
-                                <a-select-option value="INPUT">Nhập nội dung</a-select-option>
-                            </a-select>
-                        </a-form-item>
-                        <a-form-item label="Loop" :label-col="formLayout.labelCol"
+                        <a-form-item v-if="isLoop" label="Loop" :label-col="formLayout.labelCol"
                                      :wrapper-col="formLayout.wrapperCol">
                             <a-select
                                 v-model="form.loop"
@@ -41,6 +32,20 @@
                                 <a-select-option value="PAGING">Phân trang</a-select-option>
                                 <a-select-option value="LAZY">Lazyload</a-select-option>
                                 <a-select-option value="ARRAY">Danh sách</a-select-option>
+                            </a-select>
+                        </a-form-item>
+                        <a-form-item v-else label="action" :label-col="formLayout.labelCol"
+                                     :wrapper-col="formLayout.wrapperCol">
+                            <a-select
+                                v-model="form.action"
+                                showSearch
+                                placeholder="Chọn thao tác"
+                                optionFilterProp="children">
+                                <a-select-option value="GOTO">Đi đến</a-select-option>
+                                <a-select-option value="CLICK">Nhập chuột</a-select-option>
+                                <a-select-option value="EXTRACT">Tách dữ liệu</a-select-option>
+                                <a-select-option value="BACK">Quay lại</a-select-option>
+                                <a-select-option value="INPUT">Nhập nội dung</a-select-option>
                             </a-select>
                         </a-form-item>
                     </div>
@@ -71,73 +76,57 @@
                     </div>
                 </a-col>
                 <a-col :span="12" v-if="!value.hasOwnProperty('tasks')">
-                    <a-form-item v-if="form.loop" label="Max Page"
+                    <a-form-item label="Max Page" v-if="form.loop"
                                  :label-col="formLayout.labelCol"
                                  :wrapper-col="formLayout.wrapperCol">
-                        <a-input v-model="form.options.maxPage"/>
+                        <a-input v-model="form.maxPage"/>
                     </a-form-item>
-                    <a-form-item v-if="form.loop" label="Loop Target" :label-col="formLayout.labelCol"
-                                 :wrapper-col="formLayout.wrapperCol">
-                        <a-input v-model="form.options.loopTarget"/>
+                    <a-form-item label="Target" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
+                        <a-input v-model="form.target"/>
                     </a-form-item>
-                    <a-form-item v-if="form.loop" label="Loop Key" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
-                        <a-input v-model="form.options.loopKey"/>
-                    </a-form-item>
-                    <a-form-item v-if="form.action" label="Action target" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
-                        <a-input-group compact>
-                            <a-select style="width: 30%" v-model="form.options.actionSource">
-                                <a-select-option value="parent">Absolute</a-select-option>
-                                <a-select-option value="http">Direct</a-select-option>
-                            </a-select>
-                            <a-input style="width: 70%" v-model="form.options.actionTarget">
-                            </a-input>
-                        </a-input-group>
-                    </a-form-item>
-                    <a-form-item v-if="form.action === 'INPUT'" label="Text"
+                    <a-form-item label="Text" v-if="!isLoop && form.action === 'INPUT'"
                                  :label-col="formLayout.labelCol"
                                  :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.text"/>
                     </a-form-item>
-                    <a-form-item v-if="form.action === 'EXTRACT'" label="Save field"
+                    <a-form-item label="Save field" v-if="!isLoop && form.action === 'EXTRACT'"
                                  :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
-                        <a-input v-model="form.options.field"></a-input>
+                        <a-input v-model="form.field"></a-input>
                     </a-form-item>
-                    <a-form-item label="Extract Key"
-                                 :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
-                        <a-input v-model="form.options.extractKey"></a-input>
-                    </a-form-item>
-                    <a-form-item v-if="form.action === 'EXTRACT'" label="Control"
+                    <a-form-item label="Control" v-if="!isLoop && form.action === 'EXTRACT'"
                                  :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
                         <a-row :gutter="15">
                             <a-col :md="12">
-                                <a-switch v-model="form.stop" checkedChildren="Save"/>
+                                <a-switch v-model="form.stop" checkedChildren="Stop" unCheckedChildren="Stop"/>
                             </a-col>
                         </a-row>
                     </a-form-item>
-                    <a-form-item v-if="form.loop === 'ARRAY'" label="List">
+                    <a-form-item label="List" v-if="isLoop && form.loop === 'ARRAY'">
                         <a-input :autosize="{ minRows: 12 }" type="textarea" v-model="arrStr"/>
                     </a-form-item>
-                    <a-form-item v-if="form.action === 'GOTO'" label="Params" :label-col="formLayout.labelCol"
-                                 :wrapper-col="formLayout.wrapperCol">
-                        <a-row class="bt-16" v-for="(param, i) in form.options.params" :key="i">
-                            <a-col :span="12">
-                                <a-input placeholder="Key" v-model="param.key"/>
-                            </a-col>
-                            <a-col :span="12">
-                                <a-input placeholder="Value" v-model="param.value"/>
-                            </a-col>
-                            <a-button size="small" class="abs-delete ant-btn-circle"
-                                      @click="form.options.params.splice(i, 1)">
-                                <a-icon class="" type="minus-circle-o"/>
-                            </a-button>
-                        </a-row>
-                        <a-row>
-                            <a-button type="dashed" style="width: 100%" @click="addParam">
-                                <a-icon type="plus"/>
-                                Add field
-                            </a-button>
-                        </a-row>
-                    </a-form-item>
+                    <div v-if="!isLoop && form.action === 'GOTO'">
+                        <a-form-item label="Params" :label-col="formLayout.labelCol"
+                                     :wrapper-col="formLayout.wrapperCol">
+                            <a-row class="bt-16" v-for="(param, i) in form.options.params" :key="i">
+                                <a-col :span="12">
+                                    <a-input placeholder="Key" v-model="param.key"/>
+                                </a-col>
+                                <a-col :span="12">
+                                    <a-input placeholder="Value" v-model="param.value"/>
+                                </a-col>
+                                <a-button size="small" class="abs-delete ant-btn-circle"
+                                          @click="form.options.params.splice(i, 1)">
+                                    <a-icon class="" type="minus-circle-o"/>
+                                </a-button>
+                            </a-row>
+                            <a-row>
+                                <a-button type="dashed" style="width: 100%" @click="addParam">
+                                    <a-icon type="plus"/>
+                                    Add field
+                                </a-button>
+                            </a-row>
+                        </a-form-item>
+                    </div>
                 </a-col>
             </a-row>
             <a-form-item label="Fields" v-if="!value.hasOwnProperty('tasks') && form.action==='EXTRACT'">
@@ -159,16 +148,6 @@
                             @confirm="() => onDelete(record.key)">
                             <a href="javascript:;">Delete</a>
                         </a-popconfirm>
-                    </template>
-                    <template slot="expandedRowRender" slot-scope="record">
-                        <a-row :gutter="16">
-                            <a-col :span="12">
-                                <a-input v-model="record.append" placeholder="Append"></a-input>
-                            </a-col>
-                            <a-col :span="12">
-                                <a-input v-model="record.prepend" placeholder="prepend"></a-input>
-                            </a-col>
-                        </a-row>
                     </template>
                 </a-table>
                 <a-select v-model="selectedKey" mode="multiple" placeholder="Select field from campaign"
@@ -229,10 +208,11 @@
             return {
                 form: this.value,
                 formLayout: {
-                    labelCol: {span: 5},
-                    wrapperCol: {span: 18},
+                    labelCol: {span: 6},
+                    wrapperCol: {span: 14},
                 },
                 columns,
+                isLoop: false,
                 arrStr: this.value.urls ? this.value.urls.join('\n') : '',
                 selectedKey: []
             }
@@ -256,12 +236,16 @@
         watch: {
             value() {
                 this.form = this.value
+                this.isLoop = this.value.loop !== null;
                 this.arrStr = this.value.urls ? this.value.urls.join('\n') : ''
                 if (typeof this.value.options === 'undefined') {
                     this.form.options = {
                         params: []
                     }
                 }
+            },
+            isLoop() {
+
             },
             arrStr() {
                 if (this.arrStr) {

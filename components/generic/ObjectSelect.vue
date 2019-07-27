@@ -3,7 +3,7 @@
         showSearch
         :value="selected"
         placeholder="Select topics"
-        style="width: 200px"
+        style="width: 100%"
         :filterOption="false"
         @search="fetchTopic"
         @change="handleChange"
@@ -36,7 +36,7 @@
         },
         methods: {
             fetchTopic(value) {
-                this.data = []
+                this.topics = []
                 this.fetching = true
                 this.$axios.$get('/campaigns/', {
                     params: {search: value}

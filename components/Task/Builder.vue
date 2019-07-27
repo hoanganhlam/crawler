@@ -1,7 +1,7 @@
 <template>
     <div class="task-panel">
         <a-row :gutter="16" class="bt-16">
-            <a-col :span="12" class="sub-panel">
+            <a-col :span="10" class="sub-panel">
                 <Logic class="bt-16" :value="form.tasks" @select="onSelect" @input="form.tasks = $event">
                     <div class="action-bar">
                         <a-row>
@@ -45,7 +45,7 @@
                     </div>
                 </a-card>
             </a-col>
-            <a-col :span="12" class="auto-size">
+            <a-col :span="14" class="auto-size">
                 <Setting v-model="selectedNode" @delete="deleteNode"
                          :fields="form.campaign ? form.campaign.fields : []"/>
             </a-col>
@@ -60,70 +60,15 @@
 
     const SAMPLE_TASK = {
         title: null,
-        isLoop: false,
-        schedule: "",
-        isHeadless: false,
         campaign: null,
         tasks: [],
         // NOHEADLESS, API, HEADLESS
-        crawlType: 'NOHEADLESS'
-    }
-
-    const SAMPLE_LOGIC = {
-        key: null,
-        title: null,
-        action: null,
-        loop: null,
-        target: null,
-        fields: []
-    }
-
-    const SAMPLE = {
-        title: "Lấy tin tức du lịch từ VNExpress",
-        isLoop: false,
-        schedule: "",
-        isHeadless: false,
-        tasks: [
-            {
-                title: "Loop dữ liệu",
-                key: '1',
-                loop: 'ARRAY',
-                urls: [
-                    'https://vnexpress.net/giai-tri',
-                    'https://vnexpress.net/giai-tri/p2',
-                    'https://vnexpress.net/giai-tri/p3',
-                    'https://vnexpress.net/giai-tri/p4',
-                    'https://vnexpress.net/giai-tri/p5',
-                ],
-                children: [
-                    {
-                        key: '2',
-                        title: "Bóc tách dữ liệu",
-                        action: "EXTRACT",
-                        target: "body > section > section.sidebar_1 > article",
-                        fields: [
-                            {
-                                field: 'title',
-                                attr: 'innerHTML',
-                                path: 'a',
-
-                            },
-                            {
-                                field: 'url',
-                                attr: 'href',
-                                path: 'a',
-
-                            },
-                            {
-                                field: 'description',
-                                attr: 'innerHTML',
-                                path: '.description',
-
-                            }
-                        ]
-                    }
-                ]
-            }]
+        crawlType: 'NOHEADLESS',
+        options: {
+            apiKey: null,
+            apiQuery: null,
+            schedule: null
+        }
     }
 
     function searchTree(arr, key) {
@@ -196,11 +141,19 @@
                     title: 'Step ' + (this.form.tasks.length + 1).toString(),
                     action: null,
                     loop: null,
-                    target: null,
                     fields: [],
                     urls: [],
-                    field: null,
-                    stop: false,
+                    options: {
+                        stop: false,
+                        maxPage: 0,
+                        loopTarget: null,
+                        actionTarget: null,
+                        actionSource: 'http',
+                        field: null,
+                        loopKey: null,
+                        params: [],
+                        extractKey: null
+                    }
                 })
             },
             onDelete(id) {
@@ -215,9 +168,17 @@
         },
         created() {
             this.selectedNode = this.form
+            if (typeof this.form.options === 'undefined') {
+                this.form.options = {
+                    schedule: null
+                }
+            }
         },
         mounted() {
             this.socket.on('data', (data) => {
+                this.consoleDisplay.unshift(data)
+            })
+            this.socket.on('error', (data) => {
                 this.consoleDisplay.unshift(data)
             })
         },

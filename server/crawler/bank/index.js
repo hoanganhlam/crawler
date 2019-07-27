@@ -1,24 +1,25 @@
-const {
-    DataModel
-} = require('core-model');
+const {DataModel} = require('core-model');
 const puppeteer = require('puppeteer');
 const batchCrawl = Number(process.env.BATCH_CRAWL || 1);
 const cheerio = require('cheerio');
 const axios = require('axios');
 const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
-const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn', ];
-let isOptimized = false;
-var io = null;
-
+const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn',];
+const isOptimized = false;
+const {Api} = require('./api')
+const {Request} = require('./request')
+const {Headless} = require('./headless')
 /**
  * function crawler
  * @script Kịch bản crawler được lưu vào Database
  * Hàm này sẽ lấy kịch bản và map với lại structure
  */
 
+let io = null;
 let data = {}
 let taskId = null
 let isTest = false
+
 const makeNestedObjWithArrayItemsAsKeys = (arr, value) => {
     const reducer = (acc, item) => ({
         [item]: acc
@@ -26,52 +27,33 @@ const makeNestedObjWithArrayItemsAsKeys = (arr, value) => {
     return arr.reduceRight(reducer, value);
 };
 
-export function crawler(script, ioP, test) {
-    if (test) {
-        isTest = test
-    }
-    io = ioP
+export function crawler(script, listener, test) {
+    isTest = test
+    io = listener
     taskId = script._id
     switch (script.crawlType) {
         case 'HEADLESS': {
-            puppeteer.launch({
-                headless: isOptimized,
-                defaultViewport: null,
-                args: ['--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-accelerated-2d-canvas',
-                    '--disable-gpu',
-                    '--window-size=1920,1080'
-                ]
-            }).then(async browser => {
-                const page = await browser.newPage();
-                if (isOptimized) {
-                    await page.setRequestInterception(true);
-                    page.on('request', request => {
-                        const requestUrl = request._url.split('?')[0].split('#')[0];
-                        if (
-                            block_ressources.indexOf(request.resourceType()) !== -1 ||
-                            skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
-                        ) {
-                            request.abort();
-                        } else {
-                            request.continue();
-                        }
-                    });
-                }
-                await headlessCrawling(script.tasks, page, browser);
-                await browser.close();
-            });
+            let crawler = new Headless({
+                isTest: test,
+                taskId: taskId
+            }, io)
+            crawler.start(script.tasks, null, "a", "b")
             break;
         }
         case 'NOHEADLESS': {
-            noHeadlessCrawling(script.tasks, {
-                response: {}
-            });
+            let crawler = new Request({
+                isTest: test,
+                taskId: taskId
+            }, io)
+            crawler.start(script.tasks, null, "a", "b")
             break;
         }
         case 'API': {
-            apiCrawling(script.tasks)
+            let crawler = new Api({
+                isTest: test,
+                taskId: taskId
+            }, io)
+            crawler.start(script.tasks, null)
             break;
         }
         default:
@@ -79,13 +61,7 @@ export function crawler(script, ioP, test) {
     }
 }
 
-async function apiCrawling(scripts) {
-    const urls = scripts.urls
-    const results = await Promise.all(urls.map(url => axios.get(url).catch(err => io.emit('error', err))))
-    // save data
-}
-
-
+//Headless
 async function headlessCrawling(scripts, page, browser) {
     for (let i = 0; i < scripts.length; i++) {
         let action = scripts[i];
@@ -100,6 +76,7 @@ async function headlessLoopType(script, page, browser) {
             await singleLoop(script, page, browser);
             break;
         case 'PAGING':
+            await page.waitForSelector(script.target);
             await pagingLoop(script, page, browser);
             break;
         case 'LAZY':
@@ -145,6 +122,7 @@ async function headlessActionType(script, page) {
             await page.type(script.target, script.text);
             break;
         case 'EXTRACT':
+            await page.waitForSelector(script.target);
             await headlessExtractData(script, page);
             break;
         case 'BACK':
@@ -160,43 +138,7 @@ async function headlessExtractData(script, page) {
     extractData(script, html);
 }
 
-async function headlessArrayLoop(scripts, browser) {
-    let urls = scripts.urls;
-    while (urls.length) {
-        let chunks = urls.slice(0, batchCrawl);
-        urls = urls.slice(chunks.length);
-        await Promise.all(chunks.map(async (url) => {
-            let pages = [];
-            const tempPage = await browser.newPage();
-            pages.push(tempPage);
-            if (isOptimized) {
-                await tempPage.setRequestInterception(true)
-                tempPage.on('request', request => {
-                    const requestUrl = request._url.split('?')[0].split('#')[0];
-                    if (
-                        block_ressources.indexOf(request.resourceType()) !== -1 ||
-                        skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
-                    ) {
-                        request.abort();
-                    } else {
-                        request.continue();
-                    }
-                });
-            }
-            console.log(url);
-            await tempPage.goto(url, {
-                waitUntil: 'networkidle0',
-                timeout: 360000
-            });
-            await headlessCrawling(scripts.children, tempPage, browser);
-            for (let p of pages) {
-                await p.close();
-            }
-        }))
-    }
-}
-
-
+//No headless
 async function noHeadlessCrawling(scripts, data) {
     for (let i = 0; i < scripts.length; i++) {
         let action = scripts[i];
@@ -235,7 +177,7 @@ function noHeadlessExtractData(script, data) {
     extractData(script, html);
 }
 
-
+//Loop
 async function singleLoop(script, page, browser) {
     const $ = cheerio.load(await page.content());
     let urls = [];
@@ -283,31 +225,21 @@ async function pagingLoop(script, page, browser) {
     }
     while (loopCondition) {
         await headlessCrawling(script.children, page, browser);
+        // page.click(script.target)
+        // await page.waitForNavigation({
+        //     waitUntil: 'networkidle2',
+        // });
         const $ = cheerio.load(await page.content());
         let target = $(script.target) && $(script.target).attr('href');
         if (target) {
+            page.click(script.target)
             await page.goto(target, {
-                waitUntil: 'networkidle0',
+                waitUntil: 'networkidle2',
                 timeout: 360000
             });
         }
         maxPage = isInfinity ? 0 : maxPage - 1;
         loopCondition = isInfinity ? target : maxPage > 1;
-    }
-}
-
-async function noHeadlessArrayLoop(scripts) {
-    let urls = scripts.urls;
-    while (urls.length) {
-        let chunks = urls.slice(0, batchCrawl);
-        urls = urls.slice(chunks.length);
-        let responses = await Promise.all(chunks.map(url => axios.get(url).catch(err => io.emit('error', err))));
-        // await Promise.all(responses.map(response => noHeadlessStarting(scripts.children, {
-        //     response: response
-        // })));
-        responses.map(response => noHeadlessCrawling(scripts.children, {
-            response: response
-        }));
     }
 }
 
@@ -333,7 +265,58 @@ async function autoScroll(page) {
     });
 }
 
+async function noHeadlessArrayLoop(scripts) {
+    let urls = scripts.urls;
+    while (urls.length) {
+        let chunks = urls.slice(0, batchCrawl);
+        urls = urls.slice(chunks.length);
+        let responses = await Promise.all(chunks.map(url => axios.get(url).catch(err => io.emit('error', err))));
+        // await Promise.all(responses.map(response => noHeadlessStarting(scripts.children, {
+        //     response: response
+        // })));
+        responses.map(response => noHeadlessCrawling(scripts.children, {
+            response: response
+        }));
+    }
+}
 
+async function headlessArrayLoop(scripts, browser) {
+    let urls = scripts.urls;
+    while (urls.length) {
+        let chunks = urls.slice(0, batchCrawl);
+        urls = urls.slice(chunks.length);
+        await Promise.all(chunks.map(async (url) => {
+            let pages = [];
+            const tempPage = await browser.newPage();
+            pages.push(tempPage);
+            if (isOptimized) {
+                await tempPage.setRequestInterception(true)
+                tempPage.on('request', request => {
+                    const requestUrl = request._url.split('?')[0].split('#')[0];
+                    if (
+                        block_ressources.indexOf(request.resourceType()) !== -1 ||
+                        skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
+                    ) {
+                        request.abort();
+                    } else {
+                        request.continue();
+                    }
+                });
+            }
+            console.log(url);
+            await tempPage.goto(url, {
+                waitUntil: 'networkidle0',
+                timeout: 360000
+            });
+            await headlessCrawling(scripts.children, tempPage, browser);
+            for (let p of pages) {
+                await p.close();
+            }
+        }))
+    }
+}
+
+//Extract
 function extractData(script, html) {
     const $ = cheerio.load(html);
     $(script.target).each((index, value) => {
@@ -345,7 +328,6 @@ function extractData(script, html) {
             } else {
                 let arrTemp = []
                 if (field.attr === null || field.attr === '') {
-
                     $(field.path, value).each(function (i, elem) {
                         arrTemp.push($(this).html())
                     })

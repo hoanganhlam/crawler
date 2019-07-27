@@ -23,14 +23,17 @@
         <div v-if="campaign">
             <div class="bt-16">
                 <a-row :gutter="16">
-                    <a-col class="bt-16" v-for="field in campaign.fields" :key="field.key" :md="4">
-                        <a-card>
+                    <a-col class="bt-16" v-for="(field, i) in campaign.fields" :key="field.key" :md="4">
+                        <a-card :body-style="{padding: '10px'}">
                             <a-input class="bt-16" v-model="field.title" @blur="updateCampaign"/>
                             <a-input v-model="field.key" @blur="updateCampaign"/>
+                            <a-button size="small" class="abs-delete ant-btn-circle" @click="campaign.fields.splice(i, 1)">
+                                <a-icon type="delete"></a-icon>
+                            </a-button>
                         </a-card>
                     </a-col>
                     <a-col :md="4">
-                        <a-card>
+                        <a-card :body-style="{padding: '10px'}">
                             <a-input class="bt-16" v-model="newField.title" @blur="makeKey"></a-input>
                             <a-input v-model="newField.key">
                                 <a-icon style="cursor: pointer" @click="handleSave" slot="addonAfter"
@@ -40,8 +43,27 @@
                     </a-col>
                 </a-row>
             </div>
-            <a-table :columns="columns" :dataSource="data">
-                <a slot="operation" slot-scope="text" href="javascript:;">Publish</a>
+            <div class="bt-16">
+                <a-row>
+                    <a-col :span="12">
+                        <a-popconfirm
+                            title="Are you sure delete this task?" @confirm="deleteAll"
+                            okText="Yes" cancelText="No">
+                            <a-button>
+                                <span>Clean data</span>
+                                <a-icon type="delete"></a-icon>
+                            </a-button>
+                        </a-popconfirm>
+                    </a-col>
+                    <a-col style="text-align: right" :span="12">
+                        <a-pagination @change="fetchData($event)" :total="data.total" size="9"/>
+                    </a-col>
+                </a-row>
+            </div>
+            <a-table
+                :columns="columns" :dataSource="data.results" rowKey="key" size="small"
+                :pagination="false">
+                <div slot="operation" slot-scope="text">Publish</div>
             </a-table>
         </div>
     </div>
@@ -77,7 +99,10 @@
             return {
                 current: ['mail'],
                 campaignName: null,
-                data: [],
+                data: {
+                    results: [],
+                    total: 0
+                },
                 selectedField: [],
                 visible: false,
                 loading: false,
@@ -88,6 +113,10 @@
             }
         },
         methods: {
+            async deleteAll() {
+                await this.$axios.$delete(`/campaigns/${this.campaign._id}/data/`)
+                this.fetchData(1)
+            },
             createCampaign() {
                 this.$axios.$post('/campaigns/', {
                     title: this.campaignName
@@ -110,6 +139,22 @@
                 if (this.newField.title) {
                     this.newField.key = slugify(this.newField.title)
                 }
+            },
+            fetchData(page) {
+                this.$axios.get('/dataset/', {
+                    params: {
+                        campaign: this.campaign._id,
+                        page: page ? page : 1
+                    }
+                }).then(res => {
+                    this.data = res.data
+                    this.data.results = res.data.results.map(x => x.value)
+                })
+            }
+        },
+        mounted() {
+            if (this.campaign) {
+                this.fetchData(1)
             }
         },
         computed: {

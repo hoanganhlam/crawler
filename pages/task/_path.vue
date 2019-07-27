@@ -1,21 +1,17 @@
 <template>
     <div class="page_task">
-        <a-menu v-model="current" mode="horizontal">
-            <a-menu-item key="a">
-                <a-select
-                    showSearch
-                    placeholder="Select crawler"
-                    optionFilterProp="children"
-                    style="width: 200px">
-                    <a-select-option value="jack">Jack</a-select-option>
-                    <a-select-option value="lucy">Lucy</a-select-option>
-                    <a-select-option value="tom">Tom</a-select-option>
-                </a-select>
-            </a-menu-item>
-            <a-menu-item key="b">
-                <ObjectSelect/>
-            </a-menu-item>
-        </a-menu>
+        <div>
+            <a-select
+                showSearch
+                placeholder="Select crawler"
+                optionFilterProp="children"
+                style="width: 200px">
+                <a-select-option value="jack">Jack</a-select-option>
+                <a-select-option value="lucy">Lucy</a-select-option>
+                <a-select-option value="tom">Tom</a-select-option>
+            </a-select>
+            <ObjectSelect style="width: 200px"/>
+        </div>
         <a-menu v-model="current" mode="horizontal">
             <a-menu-item v-for="t in tasks" :key="`/task/${t._id}`">
                 <n-link :to="`/task/${t._id}`">

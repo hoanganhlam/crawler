@@ -1,12 +1,13 @@
 const {DataModel} = require('core-model');
 const {responseJSON, responseError} = require('./response');
 const {getBody} = require('./request');
-
+const mongoose = require('mongoose')
+const ObjectId = mongoose.Types.ObjectId;
 
 exports.create = async (req, res) => {
     let data = getBody(req, ['task', 'url', 'value']);
 
-    let test = await DataModel.find({url: data.url})
+    let test = await DataModel.find({url: data.url, task: data.task})
     if (test.length) {
         let instance = test[0]
         instance.data = data.value
@@ -22,15 +23,40 @@ exports.create = async (req, res) => {
     });
 };
 
-exports.list = (req, res) => {
-    return DataModel.find({})
-        .then(tasks => {
-            return responseJSON(res, 'SUCCESSFULLY', tasks);
-        })
-        .catch(error => {
-            let message = error && error.message ? error.message : 'ERROR';
-            return responseError(res, message, {messageCode: 'ERROR'});
+exports.list = async (req, res) => {
+    const pageSize = Number.parseInt(req.query.pageSize) || 9;
+    const page = req.query.page || 1;
+    let query = {}
+    let aggregate = [
+        {
+            $lookup: {
+                from: 'Task',
+                localField: 'task',
+                foreignField: '_id',
+                as: 'task'
+            }
+        },
+        {
+            $match: query
+        },
+    ]
+    if (req.query.campaign) {
+        query['task.campaign'] = {$all: [ObjectId(req.query.campaign)]}
+    }
+    try {
+        const results = await DataModel.aggregate(aggregate)
+        const display = await DataModel.aggregate(aggregate)
+            .skip((pageSize * page) - pageSize)
+            .limit(pageSize)
+        res.json({
+            results: display,
+            currentPage: page,
+            numPage: Math.ceil(results.length / pageSize),
+            total: results.length
         });
+    } catch (err) {
+        return next(err)
+    }
 };
 
 exports.retrieve = (req, res) => {

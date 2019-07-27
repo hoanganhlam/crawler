@@ -1,0 +1,100 @@
+[
+    {
+        "key": "1",
+        "title": "Step 1",
+        "action": "GOTO",
+        "loop": "PAGING",
+        "fields": [],
+        "urls": [],
+        "options": {
+            "stop": false,
+            "maxPage": "3",
+            "loopTarget": "#pagination .next",
+            "actionTarget": "https://vnexpress.net/du-lich",
+            "field": null,
+            "loopKey": null,
+            "params": [],
+            "actionSource": "http"
+        },
+        "children": [
+            {
+                "key": "1.1",
+                "title": "Step 1.1",
+                "action": "EXTRACT",
+                "loop": null,
+                "fields": [
+                    {
+                        "key": "title",
+                        "attr": "innerHTML",
+                        "path": ".title_news"
+                    },
+                    {
+                        "key": "short",
+                        "attr": "innerHTML",
+                        "path": ".description"
+                    },
+                    {
+                        "key": "url",
+                        "attr": "href",
+                        "path": "h4.title_news > a:nth-child(1)"
+                    }
+                ],
+                "urls": [],
+                "options": {
+                    "stop": false,
+                    "maxPage": 0,
+                    "loopTarget": null,
+                    "actionTarget": ".sidebar_1 .list_news",
+                    "field": null,
+                    "loopKey": null,
+                    "params": []
+                },
+                "stop": false,
+                "children": [
+                    {
+                        "key": "1.1.1",
+                        "title": "Step 1.1.1",
+                        "action": "GOTO",
+                        "loop": null,
+                        "fields": [],
+                        "urls": [],
+                        "options": {
+                            "stop": false,
+                            "maxPage": 0,
+                            "loopTarget": null,
+                            "actionTarget": "url",
+                            "field": null,
+                            "loopKey": null,
+                            "params": [],
+                            "actionSource": "parent"
+                        }
+                    },
+                    {
+                        "key": "1.1.2",
+                        "title": "Step 1.12",
+                        "action": "EXTRACT",
+                        "loop": null,
+                        "fields": [
+                            {
+                                "key": "content",
+                                "attr": "innerHTML",
+                                "path": ""
+                            }
+                        ],
+                        "urls": [],
+                        "options": {
+                            "stop": false,
+                            "maxPage": 0,
+                            "loopTarget": null,
+                            "actionTarget": "article.content_detail",
+                            "field": null,
+                            "loopKey": null,
+                            "params": []
+                        },
+                        "stop": true
+                    }
+                ]
+            }
+        ]
+    }
+]

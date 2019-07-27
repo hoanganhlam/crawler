@@ -1,51 +1,12 @@
-const puppeteer = require('puppeteer');
 const {DataModel} = require('core-model');
+const axios = require('axios');
 const {makeNestedObjWithArrayItemsAsKeys, deepFind, sleep} = require('./unity');
 const cheerio = require('cheerio');
-const blockResources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
-const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn',];
-const isOptimized = false;
 
-async function optimized(browser, check) {
-    let page = await browser.newPage()
-    if (check) {
-        await page.setRequestInterception(true);
-        page.on('request', request => {
-            const requestUrl = request._url.split('?')[0].split('#')[0];
-            if (
-                blockResources.indexOf(request.resourceType()) !== -1 ||
-                skippedResources.some(resource => requestUrl.indexOf(resource) !== -1)
-            ) {
-                request.abort();
-            } else {
-                request.continue();
-            }
-        });
-    }
-    return page
-}
-
-class Headless {
+class Request {
     constructor(options, io) {
-        this.options = options
+        this.options = options;
         this.io = io
-    }
-
-    async init() {
-        this.browser = await puppeteer.launch({
-            headless: isOptimized,
-            defaultViewport: null,
-            args: ['--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-accelerated-2d-canvas',
-                '--disable-gpu',
-                '--window-size=1920,1080'
-            ]
-        })
-    }
-
-    end() {
-        this.browser.close()
     }
 
     async start(tasks, traveler) {
@@ -81,28 +42,19 @@ class Headless {
                 this.options['loopPath'] = task['options']['loopTarget']
                 while (starting || page < maxPage) {
                     if (!starting) {
-                        let page = this.traveler[task.key]
-                        await page.waitForSelector(this.options['loopPath']);
-                        task['options']['actionTarget'] = this.options['loopPath']
-                        // let html = await page.content();
-                        // let $ = cheerio.load(html);
-                        // let target = $(this.options['loopPath']).attr('href');
-
-                        // if (target) {
-                        //     task['options']['actionTarget'] = target
-                        // } else {
-                        //     break
-                        // }
+                        const $ = cheerio.load(this.traveler[task.key]['data']);
+                        let target = $(this.options['loopPath']).attr('href');
+                        if (target) {
+                            task['options']['actionTarget'] = target
+                        } else {
+                            break
+                        }
                     }
                     starting = false
                     await this.handleAction(task)
                     page++
-                    // await sleep(30000)
+                    await sleep(30000)
                 }
-                break
-            case 'LAZY':
-                break
-            case 'SINGLE':
                 break
         }
     }
@@ -114,68 +66,26 @@ class Headless {
             }
             task['options']['actionTarget'] = deepFind(this.data, task['options']['absTarget'])
         }
-        let page = this.traveler[task['options']['extractKey']]
+
         switch (task.action) {
             case 'GOTO':
-                console.log('GOTO');
                 let params = {}
                 if (this.options['loopPath']) {
+
                 }
                 for (let i = 0; i < task.options.params.length; i++) {
                     params[task.options.params[i].key] = task.options.params[i].value
                 }
-                if (typeof this.traveler[task.key] === 'undefined') {
-                    this.traveler[task.key] = await optimized(this.browser, isOptimized);
-                }
-                await this.traveler[task.key].goto(task['options']['actionTarget'], {
-                    waitUntil: 'networkidle2',
-                    timeout: 300000
-                });
+                this.traveler[task.key] = await axios.get(task['options']['actionTarget'], {
+                    params: params
+                })
+
                 if (task.children) {
                     await this.start(task.children, this.traveler)
                 }
                 break
-            case 'CLICK':
-                console.log('CLICK');
-                if (page) {
-                    await page.waitForSelector(task['options']['actionTarget']);
-                    const $ = cheerio.load(await page.content());
-                    let url = $(task['options']['actionTarget']).attr('href')
-                    console.log(url);
-                    if (url) {
-                        await page.goto(url, {
-                            waitUntil: 'networkidle2'
-                        });
-                    } else {
-                        await page.click(task['options']['actionTarget']);
-                    }
-                }
-                break
-            case 'BACK':
-                console.log('BACK');
-                if (page) {
-                    await page.back()
-                }
-                break
-            case 'INPUT':
-                console.log('INPUT');
-                if (page) {
-                    await page.waitForSelector(task['options']['actionTarget']);
-                    await page.type(task['options']['actionTarget'], task.text);
-                    console.log('INPUTED');
-                }
-                break
             case 'EXTRACT':
-                if (page) {
-                    await page.waitForSelector(task['options']['actionTarget'], {
-                        timeout: 30000
-                    });
-                    const html = await page.content();
-                    await this.extract(task, html)
-                    if (task.stop) {
-
-                    }
-                }
+                await this.extract(task, this.traveler[task['options']['extractKey']]['data'])
                 break
             default:
                 break
@@ -237,8 +147,9 @@ class Headless {
             }
         }
     }
+
 }
 
 module.exports = {
-    Headless
+    Request
 }

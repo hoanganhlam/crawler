@@ -44,7 +44,7 @@ io.on('connection', function (socket) {
 
 app.post('/api/run', function (req, res, next) {
     const {TaskModel} = require('core-model');
-    const {crawler} = require('./crawler/v2')
+    const {crawler} = require('./crawler')
     TaskModel.findById(req.body.id)
         .then(function (instance) {
             if (!instance) {

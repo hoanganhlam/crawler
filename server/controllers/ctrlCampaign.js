@@ -1,7 +1,8 @@
-const {CampaignModel, UserModel} = require('core-model');
+const {CampaignModel, UserModel, DataModel, TaskModel} = require('core-model');
 const {responseError} = require('./response');
 const {getBody} = require('./request');
-
+const mongoose = require('mongoose')
+const ObjectId = mongoose.Types.ObjectId;
 
 exports.create = async (req, res, next) => {
     let user = await UserModel.findById(req.payload.id).catch(next);
@@ -71,4 +72,12 @@ exports.delete = (req, res) => {
     return req.instance.remove().then(function () {
         return res.sendStatus(204);
     });
+};
+
+
+exports.deleteData = async (req, res) => {
+    let tasks = await TaskModel.find({campaign: req.instance})
+    let tasksId = tasks.map(x => ObjectId(x._id))
+    await DataModel.deleteMany({task: {$in: tasksId}})
+    return res.sendStatus(204);
 };

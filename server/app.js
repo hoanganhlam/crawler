@@ -34,8 +34,8 @@ app.use('/api', require('./routes'));
 var appSocket = require('express')();
 var http = require('http').createServer(appSocket);
 
-http.listen(3001, function () {
-    console.log('listening on *:3001');
+http.listen(process.env.WS_PORT, function () {
+    console.log('listening on ' + process.env.WS_PORT);
 });
 var io = require('socket.io')(http);
 io.on('connection', function (socket) {

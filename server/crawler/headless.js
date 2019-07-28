@@ -38,9 +38,9 @@ class Headless {
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-accelerated-2d-canvas',
-                '--disable-gpu',
-                '--window-size=1920,1080'
+                // '--disable-accelerated-2d-canvas',
+                // '--disable-gpu',
+                // '--window-size=1920,1080'
             ]
         })
     }

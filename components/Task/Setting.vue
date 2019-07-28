@@ -37,7 +37,7 @@
                                 placeholder="Chọn thao tác"
                                 optionFilterProp="children"
                                 style="width: 200px">
-                                <a-select-option value="SINGLE">Đơn</a-select-option>
+                                <a-select-option value="BASIC">Cơ bản</a-select-option>
                                 <a-select-option value="PAGING">Phân trang</a-select-option>
                                 <a-select-option value="LAZY">Lazyload</a-select-option>
                                 <a-select-option value="ARRAY">Danh sách</a-select-option>

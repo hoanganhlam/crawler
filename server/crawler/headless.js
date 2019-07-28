@@ -66,6 +66,9 @@ class Headless {
     }
 
     async handleLoop(task) {
+        let maxPage = task['options']['maxPage'] || 0
+        let page = 0
+        let starting = true
         switch (task.loop) {
             case 'ARRAY':
                 let urls = task.urls;
@@ -75,9 +78,6 @@ class Headless {
                 }
                 break
             case 'PAGING':
-                let maxPage = task['options']['maxPage'] || 0
-                let page = 0
-                let starting = true
                 this.options['loopPath'] = task['options']['loopTarget']
                 while (starting || page < maxPage) {
                     if (!starting) {
@@ -105,7 +105,20 @@ class Headless {
                 break
             case 'LAZY':
                 break
-            case 'SINGLE':
+            case 'BASIC':
+                while (starting || page < maxPage) {
+                    let page = this.traveler[task['options']['extractKey']]
+                    await page.waitForSelector(task['options']['actionTarget']);
+                    let html = await page.content();
+                    let $ = cheerio.load(html);
+                    if ($(task['options']['actionTarget']).length) {
+                        await this.handleAction(task)
+                    } else {
+                        break
+                    }
+                    page++
+                    // await sleep(30000)
+                }
                 break
         }
     }
@@ -168,9 +181,9 @@ class Headless {
                 break
             case 'EXTRACT':
                 if (page) {
-                    await page.waitForSelector(task['options']['actionTarget'], {
-                        timeout: 30000
-                    });
+                    // await page.waitForSelector(task['options']['actionTarget'], {
+                    //     timeout: 30000
+                    // });
                     const html = await page.content();
                     await this.extract(task, html)
                     if (task.stop) {

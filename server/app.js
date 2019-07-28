@@ -1,3 +1,4 @@
+const cors = require('cors')
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -6,7 +7,22 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 require('./helpers/load-env');
 
-const userRoute = require('./routes/routeUser');
+const whitelist = [
+    'http://127.0.0.1:3000',
+    'http://localhost:3000',
+    'http://wwww.thefactwall.com',
+    'https://wwww.thefactwall.com'
+]
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (whitelist.indexOf(origin) !== -1) {
+            callback(null, true)
+        } else {
+            callback(new Error('Not allowed by CORS'))
+        }
+    }
+}
 
 const app = express();
 app.use(httpLogger('dev'));
@@ -29,15 +45,17 @@ app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 require('./config/passport');
+
+app.use(cors())
 app.use('/api', require('./routes'));
 
-var appSocket = require('express')();
-var http = require('http').createServer(appSocket);
+const appSocket = require('express')();
+const http = require('http').createServer(appSocket);
 
 http.listen(process.env.WS_PORT, function () {
     console.log('listening on ' + process.env.WS_PORT);
 });
-var io = require('socket.io')(http);
+let io = require('socket.io')(http);
 io.on('connection', function (socket) {
     socket.emit('data', {'msg': 'hello'})
 });

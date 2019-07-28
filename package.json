@@ -21,6 +21,7 @@
         "cookie-parser": "^1.4.3",
         "core-config": "file:server/cores/config",
         "core-model": "file:server/cores/model",
+        "cors": "^2.8.5",
         "dotenv": "^6.1.0",
         "express": "^4.16.4",
         "express-jwt": "^5.3.1",

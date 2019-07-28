@@ -4,7 +4,7 @@ const {makeNestedObjWithArrayItemsAsKeys, deepFind, sleep} = require('./unity');
 const cheerio = require('cheerio');
 const blockResources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
 const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn',];
-const isOptimized = false;
+const isOptimized = process.env.OPT || false;
 
 async function optimized(browser, check) {
     let page = await browser.newPage()
@@ -38,9 +38,9 @@ class Headless {
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                // '--disable-accelerated-2d-canvas',
-                // '--disable-gpu',
-                // '--window-size=1920,1080'
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--window-size=1920,1080'
             ]
         })
     }

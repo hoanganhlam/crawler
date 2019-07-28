@@ -35,8 +35,9 @@ class Headless {
         this.browser = await puppeteer.launch({
             headless: isOptimized,
             defaultViewport: null,
-            args: ['--no-sandbox',
-                '--disable-setuid-sandbox',
+            args: [
+                // '--no-sandbox',
+                // '--disable-setuid-sandbox',
                 '--disable-accelerated-2d-canvas',
                 '--disable-gpu',
                 '--window-size=1920,1080'

@@ -27,9 +27,6 @@ exports.list = async (req, res, next) => {
     const pageSize = Number.parseInt(req.query.pageSize) || 9;
     const page = req.query.page || 1;
     let query = {}
-    if (req.query.campaign) {
-        query['task.campaign'] = {$all: [ObjectId(req.query.campaign)]}
-    }
     let aggregate = [
         {
             $lookup: {
@@ -44,17 +41,21 @@ exports.list = async (req, res, next) => {
         },
 
     ]
+    if (req.query.campaign) {
+        query['task.campaign'] = {$all: [ObjectId(req.query.campaign)]}
+    }
     try {
         const options = {
             page: page,
             limit: pageSize
         };
-        let test = await DataModel.aggregatePaginate(aggregate, options)
+        let myAggregate = DataModel.aggregate(aggregate);
+        let test = await DataModel.aggregatePaginate(myAggregate, options)
         res.json({
-            results: test.data,
+            results: test.docs,
             currentPage: page,
-            numPage: test.pageCount,
-            total: test.totalCount
+            numPage: test.totalPages,
+            total: test.totalDocs
         });
     } catch (err) {
         return next(err)

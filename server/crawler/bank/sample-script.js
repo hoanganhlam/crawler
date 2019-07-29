@@ -229,14 +229,13 @@ const S3 = [
         "title": "Step 5",
         "action": "CLICK",
         "loop": null,
-        "target": "#frm > div.xp__fieldset.accommodation > div.xp__dates.xp__group > div.xp-calendar > div > div > div.bui-calendar__content > div:nth-child(1) > table > tbody > tr:nth-child(5) > td:nth-child(4)",
         "fields": [],
         "urls": [],
         "field": null,
         "stop": false,
         "options": {
             "params": [],
-            "actionTarget": "#frm > div.xp__fieldset.accommodation > div.xp__dates.xp__group > div.xp-calendar > div > div > div.bui-calendar__content > div:nth-child(1) > table > tbody > tr:nth-child(5) > td:nth-child(4)",
+            "actionTarget": "#frm > div.xp__fieldset.accommodation > div.xp__dates.xp__group > div.xp-calendar > div > div > div.bui-calendar__content > div:nth-child(1) > table > tbody > tr:nth-child(6) > td:nth-child(1)",
             "extractKey": "start"
         }
     },
@@ -245,14 +244,13 @@ const S3 = [
         "title": "Step 6",
         "action": "CLICK",
         "loop": null,
-        "target": "#frm > div.xp__fieldset.accommodation > div.xp__dates.xp__group > div.xp-calendar > div > div > div.bui-calendar__content > div:nth-child(1) > table > tbody > tr:nth-child(5) > td:nth-child(7)",
         "fields": [],
         "urls": [],
         "field": null,
         "stop": false,
         "options": {
             "params": [],
-            "actionTarget": "#frm > div.xp__fieldset.accommodation > div.xp__dates.xp__group > div.xp-calendar > div > div > div.bui-calendar__content > div:nth-child(1) > table > tbody > tr:nth-child(5) > td:nth-child(7)",
+            "actionTarget": "#frm > div.xp__fieldset.accommodation > div.xp__dates.xp__group > div.xp-calendar > div > div > div.bui-calendar__content > div:nth-child(1) > table > tbody > tr:nth-child(6) > td:nth-child(2)",
             "extractKey": "start"
         }
     },

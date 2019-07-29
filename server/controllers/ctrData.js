@@ -27,6 +27,9 @@ exports.list = async (req, res) => {
     const pageSize = Number.parseInt(req.query.pageSize) || 9;
     const page = req.query.page || 1;
     let query = {}
+    if (req.query.campaign) {
+        query['task.campaign'] = {$all: [ObjectId(req.query.campaign)]}
+    }
     let aggregate = [
         {
             $lookup: {
@@ -40,19 +43,16 @@ exports.list = async (req, res) => {
             $match: query
         },
     ]
-    if (req.query.campaign) {
-        query['task.campaign'] = {$all: [ObjectId(req.query.campaign)]}
-    }
     try {
-        const results = await DataModel.aggregate(aggregate)
+        const total = await DataModel.aggregate(aggregate).countDocuments()
         const display = await DataModel.aggregate(aggregate)
             .skip((pageSize * page) - pageSize)
             .limit(pageSize)
         res.json({
             results: display,
             currentPage: page,
-            numPage: Math.ceil(results.length / pageSize),
-            total: results.length
+            numPage: Math.ceil(total / pageSize),
+            total: total
         });
     } catch (err) {
         return next(err)

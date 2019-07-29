@@ -61,6 +61,7 @@
                 </a-row>
             </div>
             <a-table
+                :loading="loading"
                 :columns="columns" :dataSource="data.results" rowKey="key" size="small"
                 :pagination="false">
                 <div slot="operation" slot-scope="text">Publish</div>
@@ -114,26 +115,33 @@
         },
         methods: {
             async deleteAll() {
+                this.loading = true
                 await this.$axios.$delete(`/campaigns/${this.campaign._id}/data/`)
                 this.fetchData(1)
+                this.loading = false
             },
-            createCampaign() {
-                this.$axios.$post('/campaigns/', {
+            async createCampaign() {
+                let campaign = await this.$axios.$post('/campaigns/', {
                     title: this.campaignName
                 })
+                this.$router.replace({path: `/campaign/${campaign._id}`})
             },
             async handleSave() {
+                this.loading = true
                 this.campaign.fields.push(this.newField)
                 await this.updateCampaign()
                 this.newField = {
                     title: null,
                     key: null
                 }
+                this.loading = true
             },
             async updateCampaign() {
+                this.loading = false
                 await this.$axios.$put(`/campaigns/${this.campaign._id}/`, {
                     fields: this.campaign.fields
                 })
+                this.loading = false
             },
             makeKey(event) {
                 if (this.newField.title) {
@@ -141,6 +149,7 @@
                 }
             },
             fetchData(page) {
+                this.loading = true
                 this.$axios.get('/dataset/', {
                     params: {
                         campaign: this.campaign._id,
@@ -149,6 +158,7 @@
                 }).then(res => {
                     this.data = res.data
                     this.data.results = res.data.results.map(x => x.value)
+                    this.loading = false
                 })
             }
         },

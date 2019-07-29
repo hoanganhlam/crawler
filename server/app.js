@@ -58,4 +58,11 @@ app.post('/api/run', function (req, res, next) {
         }).catch(next);
 })
 
+app.get('/api/reset-user', async function (req, res, next) {
+    const {UserModel} = require('core-model');
+    await UserModel.deleteMany()
+    return res.json({msg: "OK"})
+
+})
+
 module.exports = app;

@@ -223,7 +223,13 @@ class Headless {
                     }
                     traveler[field.key] = arrTemp.length === 1 ? arrTemp[0] : arrTemp;
                     if (!Array.isArray(traveler[field.key]) && field.append) {
+                        if (field['isTrim']) {
+                            traveler[field.key] = traveler[field.key].trim()
+                        }
                         traveler[field.key] = field.append + traveler[field.key]
+                    }
+                    if (!Array.isArray(traveler[field.key]) && field.key === 'url') {
+                        traveler[field.key] = traveler[field.key].split("?")[0]
                     }
                 }
             }

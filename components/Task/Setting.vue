@@ -80,10 +80,12 @@
                                  :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.options.loopTarget"/>
                     </a-form-item>
-                    <a-form-item v-if="form.loop" label="Loop Key" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
+                    <a-form-item v-if="form.loop" label="Loop Key" :label-col="formLayout.labelCol"
+                                 :wrapper-col="formLayout.wrapperCol">
                         <a-input v-model="form.options.loopKey"/>
                     </a-form-item>
-                    <a-form-item v-if="form.action" label="Action target" :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol">
+                    <a-form-item v-if="form.action" label="Action target" :label-col="formLayout.labelCol"
+                                 :wrapper-col="formLayout.wrapperCol">
                         <a-input-group compact>
                             <a-select style="width: 30%" v-model="form.options.actionSource">
                                 <a-select-option value="parent">Absolute</a-select-option>
@@ -162,11 +164,14 @@
                     </template>
                     <template slot="expandedRowRender" slot-scope="record">
                         <a-row :gutter="16">
-                            <a-col :span="12">
+                            <a-col :span="10">
                                 <a-input v-model="record.append" placeholder="Append"></a-input>
                             </a-col>
-                            <a-col :span="12">
+                            <a-col :span="10">
                                 <a-input v-model="record.prepend" placeholder="prepend"></a-input>
+                            </a-col>
+                            <a-col :span="4">
+                                <a-switch v-model="record.isTrim" checkedChildren="Trim" unCheckedChildren="UnTrim"/>
                             </a-col>
                         </a-row>
                     </template>

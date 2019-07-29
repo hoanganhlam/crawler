@@ -23,7 +23,7 @@ exports.create = async (req, res) => {
     });
 };
 
-exports.list = async (req, res) => {
+exports.list = async (req, res, next) => {
     const pageSize = Number.parseInt(req.query.pageSize) || 9;
     const page = req.query.page || 1;
     let query = {}
@@ -42,17 +42,19 @@ exports.list = async (req, res) => {
         {
             $match: query
         },
+
     ]
     try {
-        const total = await DataModel.aggregate(aggregate).countDocuments()
-        const display = await DataModel.aggregate(aggregate)
-            .skip((pageSize * page) - pageSize)
-            .limit(pageSize)
+        const options = {
+            page: page,
+            limit: pageSize
+        };
+        let test = await DataModel.aggregatePaginate(aggregate, options)
         res.json({
-            results: display,
+            results: test.data,
             currentPage: page,
-            numPage: Math.ceil(total / pageSize),
-            total: total
+            numPage: test.pageCount,
+            total: test.totalCount
         });
     } catch (err) {
         return next(err)

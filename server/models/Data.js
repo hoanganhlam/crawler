@@ -1,5 +1,5 @@
 'use strict';
-
+const mongooseAggregatePaginate = require('mongoose-aggregate-paginate');
 const mongoose = require('mongoose');
 
 mongoose.Promise = global.Promise;
@@ -16,5 +16,7 @@ const NewSchema = new Schema({
     collection: collection,
     timestamps: true
 });
+
+NewSchema.plugin(mongooseAggregatePaginate);
 
 module.exports = mongoose.model(collection, NewSchema);

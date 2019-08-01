@@ -5,6 +5,8 @@ const cheerio = require('cheerio');
 const blockResources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
 const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn',];
 const isOptimized = process.env.OPT || false;
+var xpath = require('xpath')
+    , dom = require('xmldom').DOMParser
 
 async function optimized(browser, check) {
     let page = await browser.newPage()
@@ -186,7 +188,7 @@ class Headless {
                     //     timeout: 30000
                     // });
                     const html = await page.content();
-                    await this.extract(task, html)
+                    await this.extractSelector(task, html)
                     if (task.stop) {
 
                     }
@@ -197,7 +199,7 @@ class Headless {
         }
     }
 
-    async extract(task, instance) {
+    async extractSelector(task, instance) {
         const $ = cheerio.load(instance);
         let elms = $(task['options']['actionTarget'])
         for (let i = 0; i < elms.length; i++) {
@@ -257,6 +259,11 @@ class Headless {
                 await this.start(task.children, this.traveler)
             }
         }
+    }
+
+    async extractXpath(task, instance) {
+        let doc = new dom().parseFromString(instance)
+
     }
 }
 

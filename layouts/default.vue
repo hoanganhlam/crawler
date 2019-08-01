@@ -30,10 +30,7 @@
                         <span>Crawler</span>
                     </n-link>
                 </a-menu-item>
-            </a-menu>
-        </a-layout-sider>
-        <a-layout>
-            <a-layout-header style="background: #fff; padding: 0">
+                <a-menu-item key="ccc">
                 <a-icon
                     class="trigger"
                     :type="collapsed ? 'menu-unfold' : 'menu-fold'"
@@ -45,9 +42,12 @@
                         Đăng nhập
                     </a-button>
                 </div>
-            </a-layout-header>
+                </a-menu-item>
+            </a-menu>
+        </a-layout-sider>
+        <a-layout>
             <a-layout-content
-                :style="{ margin: '24px 16px', padding: '24px', background: '#fff', minHeight: 'calc(100vh - 112px)' }">
+                :style="{padding: '24px', background: '#fff', minHeight: 'calc(100vh - 0px)' }">
                 <nuxt/>
             </a-layout-content>
         </a-layout>

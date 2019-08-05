@@ -126,7 +126,6 @@ class Request {
                     if (!Array.isArray(traveler[field.key]) && field.key === 'url') {
                         traveler[field.key] = traveler[field.key].split("?")[0]
                     }
-
                 }
             }
             this.data = {
@@ -148,7 +147,6 @@ class Request {
                 }
                 this.data = {}
             }
-
             if (task.children) {
                 await this.start(task.children, this.traveler)
             }

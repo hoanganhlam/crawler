@@ -7,11 +7,12 @@ const cheerio = require('cheerio');
 async function test() {
     let node
     let data = await axios.get('https://en.wikipedia.org/wiki/October_30')
+
     var doc = new dom().parseFromString(data['data'])
     var result = xpath.evaluate(
         "//*[@id=\"mw-content-text\"]/div/ul[1]/li",            // xpathExpression
         doc,                        // contextNode
-        null,                       // namespaceResolver
+        null,               // namespaceResolver
         xpath.XPathResult.ANY_TYPE, // resultType
         null                        // result
     )

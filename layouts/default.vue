@@ -31,17 +31,19 @@
                     </n-link>
                 </a-menu-item>
                 <a-menu-item key="ccc">
-                <a-icon
-                    class="trigger"
-                    :type="collapsed ? 'menu-unfold' : 'menu-fold'"
-                    @click="()=> collapsed = !collapsed"
-                />
-                <div v-if="!$auth.loggedIn" style="float: right;margin-right: 1rem;">
-                    <a-button @click="visible = true" type="primary">
-                        <a-icon type="edit"/>
-                        Đăng nhập
-                    </a-button>
-                </div>
+                    <div v-if="!$auth.loggedIn" style="float: right;margin-right: 1rem;">
+                        <a-button @click="visible = true" type="primary">
+                            <a-icon type="edit"/>
+                            Đăng nhập
+                        </a-button>
+                    </div>
+                </a-menu-item>
+                <a-menu-item>
+                    <a-icon
+                        class="trigger"
+                        :type="collapsed ? 'menu-unfold' : 'menu-fold'"
+                        @click="()=> collapsed = !collapsed"
+                    />
                 </a-menu-item>
             </a-menu>
         </a-layout-sider>

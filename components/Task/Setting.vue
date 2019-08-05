@@ -143,8 +143,7 @@
                 </a-col>
             </a-row>
             <a-form-item label="Fields" v-if="!value.hasOwnProperty('tasks') && form.action==='EXTRACT'">
-                <a-table :pagination="false" class="bt-16" :columns="columns" :dataSource="form.fields"
-                         rowKey="key">
+                <a-table :pagination="false" class="bt-16" :columns="columns" :dataSource="form.fields" :rowKey="(record, id) => id">
                     <template slot="key" slot-scope="text, record">
                         <a-input v-model="record.key"></a-input>
                     </template>
@@ -247,7 +246,6 @@
                 const dataSource = [...this.form.fields]
                 this.form.fields = dataSource.filter(item => item.key !== key)
             },
-
             handleChange(keys) {
                 this.selectedKey = keys
             },
@@ -287,8 +285,7 @@
                 )
             },
         },
-        mounted() {
-        }
+        mounted() {}
     }
 </script>
 

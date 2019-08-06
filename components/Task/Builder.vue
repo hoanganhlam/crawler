@@ -152,7 +152,8 @@
                         field: null,
                         loopKey: null,
                         params: [],
-                        extractKey: null
+                        extractKey: null,
+                        targetType: 'css'
                     }
                 })
             },

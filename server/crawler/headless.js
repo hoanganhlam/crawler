@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 const {DataModel} = require('core-model');
-const {makeNestedObjWithArrayItemsAsKeys, deepFind, sleep} = require('./unity');
+const {makeNestedObjWithArrayItemsAsKeys, deepFind, sleep, fieldParse, getTarget} = require('./unity');
 const cheerio = require('cheerio');
 const blockResources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
 const skippedResources = ['quantserve', 'adzerk', 'doubleclick', 'adition', 'exelator', 'sharethrough', 'cdn.api.twitter', 'google-analytics', 'googletagmanager', 'google', 'fontawesome', 'facebook', 'analytics', 'optimizely', 'clicktale', 'mixpanel', 'zedo', 'clicksor', 'tiqcdn',];
@@ -88,9 +88,7 @@ class Headless {
                         await page.waitForSelector(this.options['loopPath']);
                         if (task.action === 'GOTO') {
                             let html = await page.content();
-                            let $ = cheerio.load(html);
-                            let target = $(this.options['loopPath']).attr('href');
-
+                            let target = getTarget(html, 'css', {path: this.options['loopPath'], position: 'href'})
                             if (target) {
                                 task['options']['actionTarget'] = target
                             } else {
@@ -206,33 +204,16 @@ class Headless {
             let saveFields = task.options.field ? task.options.field.split('.') : []
             let traveler = {}
             for (let field of task.fields) {
-                if (field.path === '') {
-                    traveler[field.key] = $(elms[i]).text();
-                } else {
-                    let arrTemp = []
-                    if (field.attr === null || field.attr === '') {
-                        $(field.path, elms[i]).each(function (i, elem) {
-                            arrTemp.push($(this).html())
-                        })
-                    } else if (field.attr === 'innerHTML') {
-                        $(field.path, elms[i]).each(function (i, elem) {
-                            arrTemp.push($(this).text())
-                        })
-                    } else {
-                        $(field.path, elms[i]).each(function (i, elem) {
-                            arrTemp.push($(this).attr(field.attr));
-                        })
+                let arrTemp = fieldParse(field, elms[i], $)
+                traveler[field.key] = arrTemp.length === 1 ? arrTemp[0] : arrTemp;
+                if (!Array.isArray(traveler[field.key]) && field.append) {
+                    if (field['isTrim']) {
+                        traveler[field.key] = traveler[field.key].trim()
                     }
-                    traveler[field.key] = arrTemp.length === 1 ? arrTemp[0] : arrTemp;
-                    if (!Array.isArray(traveler[field.key]) && field.append) {
-                        if (field['isTrim']) {
-                            traveler[field.key] = traveler[field.key].trim()
-                        }
-                        traveler[field.key] = field.append + traveler[field.key]
-                    }
-                    if (!Array.isArray(traveler[field.key]) && field.key === 'url') {
-                        traveler[field.key] = traveler[field.key].split("?")[0]
-                    }
+                    traveler[field.key] = field.append + traveler[field.key]
+                }
+                if (!Array.isArray(traveler[field.key]) && field.key === 'url') {
+                    traveler[field.key] = traveler[field.key].split("?")[0]
                 }
             }
             this.data = {
@@ -254,16 +235,10 @@ class Headless {
                 }
                 this.data = {}
             }
-
             if (task.children) {
                 await this.start(task.children, this.traveler)
             }
         }
-    }
-
-    async extractXpath(task, instance) {
-        let doc = new dom().parseFromString(instance)
-
     }
 }
 

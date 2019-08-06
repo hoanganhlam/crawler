@@ -87,11 +87,15 @@
                     <a-form-item v-if="form.action" label="Action target" :label-col="formLayout.labelCol"
                                  :wrapper-col="formLayout.wrapperCol">
                         <a-input-group compact>
-                            <a-select style="width: 30%" v-model="form.options.actionSource">
+                            <a-select style="width: 20%" v-model="form.options.actionSource">
                                 <a-select-option value="parent">Absolute</a-select-option>
                                 <a-select-option value="http">Direct</a-select-option>
                             </a-select>
-                            <a-input style="width: 70%" v-model="form.options.actionTarget">
+                            <a-select style="width: 20%" v-model="form.options.targetType">
+                                <a-select-option value="css">CSS</a-select-option>
+                                <a-select-option value="xpath">XPATH</a-select-option>
+                            </a-select>
+                            <a-input style="width: 60%" v-model="form.options.actionTarget">
                             </a-input>
                         </a-input-group>
                     </a-form-item>
@@ -143,7 +147,14 @@
                 </a-col>
             </a-row>
             <a-form-item label="Fields" v-if="!value.hasOwnProperty('tasks') && form.action==='EXTRACT'">
-                <a-table :pagination="false" class="bt-16" :columns="columns" :dataSource="form.fields" :rowKey="(record, id) => id">
+                <a-table :pagination="false" class="bt-16" :columns="columns" :dataSource="form.fields"
+                         :rowKey="(record, id) => id">
+                    <template slot="type" slot-scope="text, record">
+                        <a-select style="width: 100px" v-model="record.type">
+                            <a-select-option value="css">CSS</a-select-option>
+                            <a-select-option value="xpath">XPATH</a-select-option>
+                        </a-select>
+                    </template>
                     <template slot="key" slot-scope="text, record">
                         <a-input v-model="record.key"></a-input>
                     </template>
@@ -191,6 +202,12 @@
     import ObjectSelect from '../../components/generic/ObjectSelect'
 
     const columns = [
+        {
+            dataIndex: 'type',
+            key: 'type',
+            slots: {title: 'Type'},
+            scopedSlots: {customRender: 'type'},
+        },
         {
             dataIndex: 'key',
             key: 'key',
@@ -285,7 +302,8 @@
                 )
             },
         },
-        mounted() {}
+        mounted() {
+        }
     }
 </script>
 

@@ -1,6 +1,6 @@
 const {DataModel} = require('core-model');
 const axios = require('axios');
-const {makeNestedObjWithArrayItemsAsKeys, deepFind, sleep} = require('./unity');
+const {makeNestedObjWithArrayItemsAsKeys, deepFind, sleep, fieldParse, getTarget} = require('./unity');
 const cheerio = require('cheerio');
 
 class Request {
@@ -42,8 +42,10 @@ class Request {
                 this.options['loopPath'] = task['options']['loopTarget']
                 while (starting || page < maxPage) {
                     if (!starting) {
-                        const $ = cheerio.load(this.traveler[task.key]['data']);
-                        let target = $(this.options['loopPath']).attr('href');
+                        let target = getTarget(this.traveler[task.key]['data'], this.options['targetType'], {
+                            path: this.options['loopPath'],
+                            position: 'href'
+                        })
                         if (target) {
                             task['options']['actionTarget'] = target
                         } else {
@@ -66,7 +68,6 @@ class Request {
             }
             task['options']['actionTarget'] = deepFind(this.data, task['options']['absTarget'])
         }
-
         switch (task.action) {
             case 'GOTO':
                 let params = {}
@@ -79,7 +80,6 @@ class Request {
                 this.traveler[task.key] = await axios.get(task['options']['actionTarget'], {
                     params: params
                 })
-
                 if (task.children) {
                     await this.start(task.children, this.traveler)
                 }
@@ -102,20 +102,7 @@ class Request {
                 if (field.path === '') {
                     traveler[field.key] = $(elms[i]).text();
                 } else {
-                    let arrTemp = []
-                    if (field.attr === null || field.attr === '') {
-                        $(field.path, elms[i]).each(function (i, elem) {
-                            arrTemp.push($(this).html())
-                        })
-                    } else if (field.attr === 'innerHTML') {
-                        $(field.path, elms[i]).each(function (i, elem) {
-                            arrTemp.push($(this).text())
-                        })
-                    } else {
-                        $(field.path, elms[i]).each(function (i, elem) {
-                            arrTemp.push($(this).attr(field.attr));
-                        })
-                    }
+                    let arrTemp = fieldParse(field, $(elms[i]), field.type)
                     traveler[field.key] = arrTemp.length === 1 ? arrTemp[0] : arrTemp;
                     if (!Array.isArray(traveler[field.key]) && field.append) {
                         if (field['isTrim']) {

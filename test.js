@@ -8,14 +8,8 @@ async function test() {
     let node
     let data = await axios.get('https://en.wikipedia.org/wiki/October_30')
 
-    var doc = new dom().parseFromString(data['data'])
-    var result = xpath.evaluate(
-        "//*[@id=\"mw-content-text\"]/div/ul[1]/li",            // xpathExpression
-        doc,                        // contextNode
-        null,               // namespaceResolver
-        xpath.XPathResult.ANY_TYPE, // resultType
-        null                        // result
-    )
+    let doc = new dom().parseFromString(data['data'])
+    let result = xpath.evaluate("//*[@id=\"mw-content-text\"]/div/ul[1]/li", doc, null, xpath.XPathResult.ANY_TYPE, null)
 
     node = result.iterateNext();
     while (node) {

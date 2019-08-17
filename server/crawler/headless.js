@@ -186,10 +186,7 @@ class Headless {
                     //     timeout: 30000
                     // });
                     const html = await page.content();
-                    await this.extractSelector(task, html)
-                    if (task.stop) {
-
-                    }
+                    await this.extract(task, html)
                 }
                 break
             default:
@@ -197,30 +194,38 @@ class Headless {
         }
     }
 
-    async extractSelector(task, instance) {
-        const $ = cheerio.load(instance);
-        let elms = $(task['options']['actionTarget'])
+    async extract(task, instance) {
+        let elms = getTarget(instance, task['options']['targetType'], {
+            path: task['options']['actionTarget'],
+            position: null
+        }).map(x => cheerio.load(x))
         for (let i = 0; i < elms.length; i++) {
             let saveFields = task.options.field ? task.options.field.split('.') : []
             let traveler = {}
             for (let field of task.fields) {
-                let arrTemp = fieldParse(field, elms[i], $)
-                traveler[field.key] = arrTemp.length === 1 ? arrTemp[0] : arrTemp;
-                if (!Array.isArray(traveler[field.key]) && field.append) {
-                    if (field['isTrim']) {
-                        traveler[field.key] = traveler[field.key].trim()
+                if (field.path === '') {
+                    traveler[field.key] = elms[i].text();
+                } else {
+                    let arrTemp = fieldParse(field, elms[i], field.type)
+                    traveler[field.key] = arrTemp.length === 1 ? arrTemp[0] : arrTemp;
+                    if (!Array.isArray(traveler[field.key]) && field.append) {
+                        if (field['isTrim']) {
+                            traveler[field.key] = traveler[field.key].trim()
+                        }
+                        traveler[field.key] = field.append + traveler[field.key]
                     }
-                    traveler[field.key] = field.append + traveler[field.key]
-                }
-                if (!Array.isArray(traveler[field.key]) && field.key === 'url') {
-                    traveler[field.key] = traveler[field.key].split("?")[0]
+                    if (!Array.isArray(traveler[field.key]) && field.key === 'url') {
+                        traveler[field.key] = traveler[field.key].split("?")[0]
+                    }
                 }
             }
             this.data = {
                 ...this.data,
                 ...makeNestedObjWithArrayItemsAsKeys(saveFields, traveler)
             }
-            if (task.stop) {
+            if (task.children && task.children.length) {
+                await this.start(task.children, this.traveler)
+            } else {
                 if (!this.options['isTest']) {
                     let instance = new DataModel({
                         url: this.data['url'],
@@ -233,10 +238,6 @@ class Headless {
                         this.io.emit('data', this.data)
                     }
                 }
-                this.data = {}
-            }
-            if (task.children) {
-                await this.start(task.children, this.traveler)
             }
         }
     }

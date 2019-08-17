@@ -36,18 +36,18 @@ function fieldParse(field, elm, type) {
     let arrTemp = []
     if (type === 'xpath') {
         let options = {
-            warning: function (w) {}
+            warning: function (w) {
+            }
         }
         let doc = new DOMParser({errorHandler: options}).parseFromString(elm.html())
         if (field.path === '') {
-            let result = xpath.evaluate(field.path + '.text()', doc, null, xpath.XPathResult.ANY_TYPE, null)
+            let result = xpath.evaluate(field.path + '/text()', doc, null, xpath.XPathResult.ANY_TYPE, null)
             arrTemp.push(result)
         } else {
             let node, result = xpath.evaluate(field.path, doc, null, xpath.XPathResult.ANY_TYPE, null)
             node = result.iterateNext();
             while (node) {
                 const $ = cheerio.load(node.toString());
-                console.log($.text());
                 if (field.attr === null || field.attr === '') {
                     arrTemp.push($.html())
                 } else if (field.attr === 'innerHTML') {
@@ -82,23 +82,52 @@ function fieldParse(field, elm, type) {
 }
 
 function getTarget(html, type, {path, position}) {
-    let out = null
+    let out = []
     if (type === 'xpath') {
-
+        let options = {
+            warning: function (w) {
+            }
+        }
+        let doc = new DOMParser({errorHandler: options}).parseFromString(html)
+        if (path === '') {
+            out.push(xpath.evaluate(path, doc, null, xpath.XPathResult.ANY_TYPE, null))
+        } else {
+            let node, result = xpath.evaluate(path, doc, null, xpath.XPathResult.ANY_TYPE, null)
+            node = result.iterateNext();
+            while (node) {
+                const $ = cheerio.load(node.toString());
+                if (position === null || position === '') {
+                    out.push($.html())
+                } else if (position === 'innerHTML') {
+                    out.push($.text())
+                } else {
+                    out.push($.attr(position));
+                }
+                node = result.iterateNext();
+            }
+        }
     } else {
         let $ = cheerio.load(html);
         switch (position) {
             case '':
-                out = $(path).html()
+                $(path).each(function (i, elem) {
+                    out.push($(this).html())
+                })
                 break
             case null:
-                out = $(path).html()
+                $(path).each(function (i, elem) {
+                    out.push($(this).html())
+                })
                 break
             case 'innerHTML':
-                out = $(path).text()
+                $(path).each(function (i, elem) {
+                    out.push($(this).text())
+                })
                 break
             default:
-                out = $(path).attr(position)
+                $(path).each(function (i, elem) {
+                    out.push($(this).attr(position))
+                })
                 break
         }
     }

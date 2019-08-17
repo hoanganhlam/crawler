@@ -46,8 +46,8 @@ class Request {
                             path: this.options['loopPath'],
                             position: 'href'
                         })
-                        if (target) {
-                            task['options']['actionTarget'] = target
+                        if (target && target.length) {
+                            task['options']['actionTarget'] = target[0]
                         } else {
                             break
                         }
@@ -93,16 +93,18 @@ class Request {
     }
 
     async extract(task, instance) {
-        const $ = cheerio.load(instance);
-        let elms = $(task['options']['actionTarget'])
+        let elms = getTarget(instance, task['options']['targetType'], {
+            path: task['options']['actionTarget'],
+            position: null
+        }).map(x => cheerio.load(x))
         for (let i = 0; i < elms.length; i++) {
             let saveFields = task.options.field ? task.options.field.split('.') : []
             let traveler = {}
             for (let field of task.fields) {
                 if (field.path === '') {
-                    traveler[field.key] = $(elms[i]).text();
+                    traveler[field.key] = elms[i].text();
                 } else {
-                    let arrTemp = fieldParse(field, $(elms[i]), field.type)
+                    let arrTemp = fieldParse(field, elms[i], field.type)
                     traveler[field.key] = arrTemp.length === 1 ? arrTemp[0] : arrTemp;
                     if (!Array.isArray(traveler[field.key]) && field.append) {
                         if (field['isTrim']) {
@@ -119,7 +121,9 @@ class Request {
                 ...this.data,
                 ...makeNestedObjWithArrayItemsAsKeys(saveFields, traveler)
             }
-            if (task.stop) {
+            if (task.children && task.children.length) {
+                await this.start(task.children, this.traveler)
+            } else {
                 if (!this.options['isTest']) {
                     let instance = new DataModel({
                         url: this.data['url'],
@@ -132,14 +136,9 @@ class Request {
                         this.io.emit('data', this.data)
                     }
                 }
-                this.data = {}
-            }
-            if (task.children) {
-                await this.start(task.children, this.traveler)
             }
         }
     }
-
 }
 
 module.exports = {
